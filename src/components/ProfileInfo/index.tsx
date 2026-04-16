@@ -25,6 +25,7 @@ import DOMPurify from "dompurify";
 import { useTranslation } from "react-i18next";
 import Select from "@mui/material/Select";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 const ProfileInfo = observer(() => {
   const { t, i18n } = useTranslation();
@@ -78,6 +79,7 @@ const ProfileInfo = observer(() => {
 
   const handleLogout = () => {
     dispatch(logOut());
+    redirect("/");
   };
 
   const changeProfile = (data: IProfileForm) => {

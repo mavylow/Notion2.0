@@ -1,5 +1,5 @@
 import type { IForm, IUser } from "@/interfaces";
-import { loginUser, restoreUser, signUpUser } from "@utils/apiUtil";
+import { loginUser, logoutUser, restoreUser, signUpUser } from "@utils/apiUtil";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { modalSlice } from "@slices/modalSlice";
 import DOMPurify from "dompurify";
@@ -30,9 +30,7 @@ export const signIn = createAsyncThunk(
       );
 
       if (!user || !token) {
-     
         throw new Error("Invalid credentials");
-        
       }
 
       dispatch(
@@ -63,12 +61,6 @@ export const restoreAuth = createAsyncThunk(
   "auth/restoreAuth",
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        return rejectWithValue("No token found");
-      }
-
       const user = await restoreUser();
 
       if (user) {
@@ -131,7 +123,7 @@ export const signUp = createAsyncThunk(
 
       dispatch(
         modalSlice.actions.setModal({
-         message: "signUpStatus.error",
+          message: "signUpStatus.error",
           status: "error",
         })
       );
@@ -144,7 +136,7 @@ export const signUp = createAsyncThunk(
 export const logOut = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch }) => {
-    localStorage.removeItem("token");
+    await logoutUser();
 
     dispatch(
       modalSlice.actions.setModal({
@@ -152,7 +144,6 @@ export const logOut = createAsyncThunk(
         status: "info",
       })
     );
-
     return null;
   }
 );

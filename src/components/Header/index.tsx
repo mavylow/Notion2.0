@@ -118,6 +118,9 @@ function Header() {
                     >
                       Statistics
                     </Link>
+                    <Link data-testid="statistics" href={"/desk"}>
+                      Note Desk
+                    </Link>
                   </>
                 ) : (
                   <>

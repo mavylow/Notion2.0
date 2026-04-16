@@ -7,21 +7,27 @@ interface IModal {
   status: "error" | "warning" | "success" | null;
 }
 
-const initialState: IModal[] = [{
-  id: 1,
-  isOpen: false,
-  message: "",
-  status: null,
-}];
+const initialState: IModal[] = [
+  {
+    id: 1,
+    isOpen: false,
+    message: "",
+    status: null,
+  },
+];
 
 export const modalSlice = createSlice({
   name: "modal",
   initialState,
   reducers: {
     setModal(state, action) {
-      const newModal = {message: action.payload.message, status: action.payload.status, isOpen: true, id: state.length+1}
+      const newModal = {
+        message: action.payload.message,
+        status: action.payload.status,
+        isOpen: true,
+        id: state.length + 1,
+      };
       state.push(newModal);
-      console.log(state.filter((m)=>m.isOpen))
     },
     setIsOpen: (state, action) => {
       const index = state.findIndex((m) => m.id === action.payload.id);
@@ -33,9 +39,8 @@ export const modalSlice = createSlice({
     removeModal: (state, action) => {
       return state.filter((m) => m.id !== action.payload);
     },
-    
   },
 });
 
-export default modalSlice.reducer
-export const {setModal, setIsOpen, removeModal} = modalSlice.actions
+export default modalSlice.reducer;
+export const { setModal, setIsOpen, removeModal } = modalSlice.actions;

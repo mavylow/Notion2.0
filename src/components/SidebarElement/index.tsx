@@ -26,7 +26,7 @@ export function SidebarElement({ element }: SidebarElementProps) {
     return (
       <div className="aside-element">
         <Image
-          src={element.photo}
+          src={element.profileImage || "/assets/default.png"}
           alt="suggested user avatar image"
           height={48}
           width={48}

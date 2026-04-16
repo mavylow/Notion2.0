@@ -15,7 +15,7 @@ interface ClientsInitProps {
 const queryClient = new QueryClient();
 
 function ClientsInit({ children }: ClientsInitProps) {
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(true);
   const { i18n } = useTranslation();
 
   useEffect(() => {
@@ -28,16 +28,16 @@ function ClientsInit({ children }: ClientsInitProps) {
     }
   }, [i18n.language, ready]);
 
-  useEffect(() => {
-    async function enableMocking() {
-      const { startMockingSocial } = await import(
-        "@sidekick-monorepo/internship-backend"
-      );
-      await startMockingSocial();
-      setReady(true);
-    }
-    enableMocking();
-  }, []);
+  // useEffect(() => {
+  //   async function enableMocking() {
+  //     const { startMockingSocial } = await import(
+  //       "@sidekick-monorepo/internship-backend"
+  //     );
+  //     await startMockingSocial();
+  //     setReady(true);
+  //   }
+  //   enableMocking();
+  // }, []);
 
   if (!ready) {
     return null;

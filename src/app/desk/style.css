@@ -1,0 +1,27 @@
+.desk-container {
+  height: calc(100vh - 38px - 68px);
+  width: 100vw;
+  display: flex;
+  flex-direction: row;
+}
+
+.desk-container > div {
+  height: 100%;
+}
+
+.desk-aside {
+  width: 20vw;
+  overflow-y: scroll;
+  height: 100%;
+}
+
+.desk {
+  width: 100%;
+  background-image: radial-gradient(
+    circle at center,
+    var(--border-color) 0.1rem,
+    transparent 0
+  );
+  background-size: 1.4rem 1.4rem;
+  background-repeat: round;
+}
