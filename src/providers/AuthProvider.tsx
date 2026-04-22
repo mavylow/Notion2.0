@@ -57,9 +57,6 @@ function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  if (loading) {
-    return <CircularProgress sx={{ color: "var(--primary-orange)" }} />;
-  }
   return (
     <AuthContext.Provider value={{ user, updateUser }}>
       {children}

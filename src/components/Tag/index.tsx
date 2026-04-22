@@ -7,8 +7,16 @@ import { useRef } from "react";
 import { useDrag } from "react-dnd";
 import "@components/Tag/style.css";
 import { RootState } from "@/store";
+import { ITag } from "@/interfaces";
 
-function Tag({ title, body, id, x, y, isActive, onFocusChange }) {
+function Tag({
+  tag,
+  onFocusChange,
+}: {
+  tag: ITag;
+  onFocusChange: (id: number) => void;
+}) {
+  const { title, body, id, x, y, isActive } = tag;
   const { data: activeNote } = useSelector((state: RootState) => state.note);
   const dispatch = useDispatch();
 
@@ -44,7 +52,7 @@ function Tag({ title, body, id, x, y, isActive, onFocusChange }) {
         opacity: isDragging ? 0.7 : 1,
         cursor: "move",
       }}
-      id={id}
+      id={id?.toString()}
       className={`tag ${isActive && "tag-editable"}`}
       onClick={() => onFocusChange(id)}
     >
@@ -64,12 +72,12 @@ function Tag({ title, body, id, x, y, isActive, onFocusChange }) {
           <textarea
             value={activeNote.title}
             name="title"
-            id={id}
+            id={id?.toString()}
             onChange={handleChangeInput}
           ></textarea>
           <textarea
             name="body"
-            id={id}
+            id={id?.toString()}
             value={activeNote.body}
             onChange={handleChangeInput}
           ></textarea>

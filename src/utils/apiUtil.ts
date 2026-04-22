@@ -1,3 +1,4 @@
+import { IDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -173,11 +174,25 @@ export const getNotes = (page: number, per_page: number) => {
   return res;
 };
 
-export const getNote = async (id: string) => {
+export const getNote = async (id: number) => {
   const note = await fetchRESTData(`/api/note/${id}`, "GET");
   return note.data;
 };
 
-export const deleteNote = async (id: string) => {
+export const deleteNote = async (id: number) => {
   return await fetchRESTData(`/api/note/${id}`, "DELETE");
+};
+
+export const getDesks = async () => {
+  const desks = await fetchRESTData(`/api/desks`, "GET");
+  console.log(desks.data);
+  return desks.data;
+};
+export const createDesk = async (newDesk: IDesk) => {
+  const desk = await fetchRESTData(
+    `/api/desks`,
+    "POST",
+    JSON.stringify(newDesk)
+  );
+  return desk;
 };

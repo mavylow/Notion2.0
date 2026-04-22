@@ -13,9 +13,9 @@ interface NoteInputPayload {
   value: string | boolean | number;
 }
 
-export const fetchNote = createAsyncThunk<ITag, string>(
+export const fetchNote = createAsyncThunk<ITag, number>(
   "note/fetchNote",
-  async (id: string) => {
+  async (id: number) => {
     const note = await getNote(id);
     return note;
   }
@@ -30,6 +30,7 @@ const initialState: NoteState = {
     desk: false,
     x: 0,
     y: 0,
+    deskId: null,
     createdAt: null,
     isActive: false,
   },

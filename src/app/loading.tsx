@@ -1,4 +1,7 @@
+"use client";
+
 import CircularProgress from "@mui/material/CircularProgress";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 
 const LoadingDiv = styled.div`
@@ -11,6 +14,14 @@ const LoadingDiv = styled.div`
 `;
 
 function Loading() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <LoadingDiv>
       <CircularProgress sx={{ color: "var(--primary-orange)" }} />

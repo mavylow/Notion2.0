@@ -3,12 +3,12 @@ import pool from "@/db/db.js";
 
 export async function POST(request: NextRequest) {
   const reqBody = await request.json();
-  const { userId, note, desk, x: pageX, y: pageY, createdAt } = reqBody;
+  const { userId, note, desk, x: pageX, y: pageY, deskId } = reqBody;
 
   try {
     const query = `
-      INSERT INTO notes ("authorId", title, body, desk, x, y, "createdAt") 
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO notes ("authorId", title, body, desk, x, y, "deskId", "createdAt") 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
     const result = await pool.query(query, [
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       desk,
       pageX,
       pageY,
+      deskId,
       new Date(),
     ]);
     return NextResponse.json({ success: true, data: result.rows[0] });
@@ -33,27 +34,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-// export const addNote = async (req, res) => {
-//   const { userId, title, body, desk, x, y, createdAt } = req.body;
-//   try {
-//     const query = `
-//       INSERT INTO notes ("userId", title, body, desk, x, y, "createdAt")
-//       VALUES ($1, $2, $3, $4, $5, $6, $7)
-//       RETURNING *
-//     `;
-//     const result = await pool.query(query, [
-//       userId,
-//       title,
-//       body,
-//       desk,
-//       x,
-//       y,
-//       createdAt,
-//     ]);
-//     res.status(201).json(result.rows[0]);
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ message: "Internal server error" });
-//   }
-// };

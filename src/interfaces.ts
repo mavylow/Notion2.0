@@ -118,7 +118,13 @@ export interface INote {
   desk: boolean;
   x: number;
   y: number;
+  deskId: number;
   createdAt: string;
 }
 
 export type ITag = INote & { isActive: boolean };
+
+export interface IDesk {
+  name: string;
+  public: boolean;
+}

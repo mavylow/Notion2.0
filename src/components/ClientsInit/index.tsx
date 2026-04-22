@@ -28,17 +28,6 @@ function ClientsInit({ children }: ClientsInitProps) {
     }
   }, [i18n.language, ready]);
 
-  // useEffect(() => {
-  //   async function enableMocking() {
-  //     const { startMockingSocial } = await import(
-  //       "@sidekick-monorepo/internship-backend"
-  //     );
-  //     await startMockingSocial();
-  //     setReady(true);
-  //   }
-  //   enableMocking();
-  // }, []);
-
   if (!ready) {
     return null;
   }

@@ -157,6 +157,12 @@ i18next
           russian: "Russian",
           italian: "Italian",
         },
+
+        createDesk: "Create Desk",
+        deskName: "Desk Name",
+        deskNamePlaceholder: "Enter desk name...",
+        deskLink: "Desk Link (optional)",
+        deskLinkPlaceholder: "Enter desk link...",
       },
 
       ru: {
@@ -300,6 +306,11 @@ i18next
           logOutStatus: {
             success: "Вы вышли из системы",
           },
+          createDesk: "Создать доску",
+          deskName: "Название доски",
+          deskNamePlaceholder: "Введите название доски...",
+          deskLink: "Ссылка на доску (необязательно)",
+          deskLinkPlaceholder: "Введите ссылку на доску...",
         },
       },
 
@@ -440,6 +451,12 @@ i18next
           logOutStatus: {
             success: "Disconnessione effettuata con successo",
           },
+
+          createDesk: "Crea Scrivia",
+          deskName: "Nome della scrivia",
+          deskNamePlaceholder: "Inserisci il nome della scrivia...",
+          deskLink: "Link della scrivia (opzionale)",
+          deskLinkPlaceholder: "Inserisci il link della scrivia...",
         },
       },
     },

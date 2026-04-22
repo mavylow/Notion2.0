@@ -21,7 +21,9 @@
   fill: var(--svg-color);
   stroke: none;
 }
-.svg-heart-disliked path {
+.svg-heart-disliked path,
+.svg-add path,
+.svg-arrow-left path {
   fill: none;
   stroke: var(--svg-color);
 }
