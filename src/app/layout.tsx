@@ -28,7 +28,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" data-theme="dark">
       <head>
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="author" content="Sidekick" />
         <title>social_media</title>
       </head>

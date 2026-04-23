@@ -5,19 +5,20 @@ import Tag from "@/components/Tag";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useRef, useState } from "react";
-import { ItemTypes } from "@utils/config";
+import { ItemTypes, socketActions } from "@utils/config";
 import "@app/desk/style.css";
-import { useDrop, XYCoord } from "react-dnd";
-import { IDesk, Note } from "@/interfaces";
+import { useDrop } from "react-dnd";
+import { INote, Note } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
-import { fetchNote, resetNote } from "@/slices/noteSlice";
+import { fetchNote, resetNote, setFullNote } from "@/slices/noteSlice";
 import { deleteNote } from "@/utils/apiUtil";
 import Button from "@/components/Button";
 import HamburgerMenuIcon from "@/assets/HamburgerMenuIcon";
 import ArrowLeftIcon from "@/assets/ArrowIcon";
-
 import { useParams, useRouter } from "next/navigation";
+import { io } from "socket.io-client";
+import * as Y from "yjs";
 
 function Desk() {
   const { id } = useParams();
@@ -34,113 +35,80 @@ function Desk() {
   const [isExpanded, setIsExpanded] = useState(true);
   const tagRef = useRef(null);
 
-  const wsRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef(null);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const activeNoteRef = useRef(activeNote);
 
   useEffect(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      return;
-    }
+    activeNoteRef.current = activeNote;
+  }, [activeNote]);
 
-    wsRef.current = new WebSocket("ws://localhost:1234");
+  useEffect(() => {
+    const socket = io("http://localhost:3000", {
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+    });
 
-    wsRef.current.onopen = () => {
-      console.log("✅ WebSocket connected");
+    socketRef.current = socket;
 
-      wsRef.current?.send(
-        JSON.stringify({
-          type: "auth",
-          userId: user?.id,
-          room: "desk",
-        })
-      );
-    };
+    socket.on("connect", () => {
+      setIsConnected(true);
+    });
 
-    wsRef.current.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("📨 Message received:", data);
+    socket.on(socketActions.CHANGE, (data) => {
+      if (data.id) {
+        setTags((prevTags) =>
+          prevTags.map((tag) => {
+            if (tag.id === data.id) {
+              return {
+                ...tag,
+                [data.name]: data.value,
+              };
+            }
+            return tag;
+          })
+        );
 
-        switch (data.type) {
-          case "notification":
-            console.log("Notification:", data.message);
-            break;
-          case "sync":
-            console.log("Sync data:", data.payload);
-            break;
-
-          case "note_created":
-            refetchNotes();
-          case "note_changed":
-            refetchNotes();
-            break;
-          default:
-            console.log("Unknown message type:", data);
+        if (activeNoteRef.current?.id === data.id) {
+          dispatch(
+            setFullNote({
+              ...activeNoteRef.current,
+              [data.name]: data.value,
+            })
+          );
         }
-      } catch {
-        console.log("📨 Raw message:", event.data);
       }
-    };
+    });
 
-    wsRef.current.onerror = (error) => {
-      console.error("❌ WebSocket error:", error);
-    };
+    socket.on(socketActions.ADD, (data) => {
+      setTags((prev) => [...prev, { ...data, isActive: false }]);
+    });
 
-    wsRef.current.onclose = () => {
-      console.log("🔌 WebSocket disconnected");
-    };
+    socket.on(socketActions.DELETE, (data) => {
+      setTags((prev) => prev.filter((tag) => tag.id !== data.id));
+      refetchNotes();
+    });
+
+    socket.on(socketActions.MOVE, (data) => {
+      setTags((prev) => prev.map((tag) => (tag.id === data.id ? data : tag)));
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Disconnected");
+      setIsConnected(false);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Connection error:", error);
+    });
 
     return () => {
-      if (wsRef.current?.readyState === WebSocket.OPEN) {
-        wsRef.current.close();
+      if (socket) {
+        socket.disconnect();
       }
     };
-  }, [user?.id]);
-
-  // useEffect(() => {
-  //   if (!user?.id) return;
-
-  //   ydocRef.current = new Y.Doc();
-
-  //   yjsProviderRef.current = new WebsocketProvider(
-  //     "ws://localhost:1235",
-  //     `desk-${user.id}`,
-  //     ydocRef.current
-  //   );
-
-  //   yjsProviderRef.current.on("status", (event) => {
-  //     console.log("Yjs WebSocket status:", event.status);
-  //   });
-
-  //   yjsProviderRef.current.on("connection-error", (error) => {
-  //     console.error("Yjs connection error:", error);
-  //   });
-
-  //   const yText = ydocRef.current.getText("desk-content");
-  //   yText.observe(() => {
-  //     console.log("Document changed:", yText.toString());
-  //   });
-
-  //   return () => {
-  //     yjsProviderRef.current?.destroy();
-  //     ydocRef.current?.destroy();
-  //   };
-  // }, [user?.id]);
-
-  const sendWebSocketMessage = (type: string, payload: any) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type, payload }));
-    } else {
-      console.warn("WebSocket is not connected");
-    }
-  };
-
-  const notifyNoteCreated = (note: any) => {
-    sendWebSocketMessage("note_created", {
-      noteId: note.id,
-      userId: user?.id,
-      timestamp: Date.now(),
-    });
-  };
+  }, [dispatch]);
 
   const handleAddTag = useMutation({
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
@@ -162,13 +130,13 @@ function Desk() {
         body: JSON.stringify(newTag),
       });
 
-      return res.json();
+      const result = await res.json();
+      return result.data;
     },
 
     onSuccess: (data) => {
-      setTags((prev) => [...prev, { ...data, isActive: false }]);
+      sendSocketMessage(socketActions.ADD, data);
       refetchNotes();
-      notifyNoteCreated(data);
     },
   });
 
@@ -211,7 +179,6 @@ function Desk() {
 
     onSuccess: (data) => {
       refetchNotes();
-      sendWebSocketMessage("note_changed", data);
     },
   });
 
@@ -256,7 +223,8 @@ function Desk() {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
 
-      return res.json();
+      const result = await res.json();
+      return result.data;
     },
 
     onSuccess: (data) => {
@@ -265,7 +233,6 @@ function Desk() {
           tag.id === data.id ? { ...data, isActive: tag.isActive } : tag
         )
       );
-      refetchNotes();
     },
 
     onError: (error) => {
@@ -277,25 +244,28 @@ function Desk() {
     mutationFn: async (id: number) => {
       await deleteNote(id);
     },
-    onSuccess: () => {
-      refetchNotes();
+    onSuccess: (data, variables) => {
+      const deletedId = variables;
+      sendSocketMessage(socketActions.DELETE, { id: deletedId });
+      setTags((prev) => prev.filter((tag) => tag.id !== deletedId));
     },
   });
 
-  const handleChangeFocus = (id: number) => {
+  const handleChangeFocus = async (id: number) => {
     if (activeNote?.id === id) {
       return;
     }
 
     if (activeNote?.id && !noteLoading) {
-      handleEditTag.mutate({
+      await handleEditTag.mutateAsync({
         id: activeNote.id,
         title: activeNote.title,
         body: activeNote.body,
       });
     }
 
-    dispatch(fetchNote(id));
+    await dispatch(fetchNote(id));
+
     setTags((prevTags) =>
       prevTags.map((tag) => ({
         ...tag,
@@ -358,10 +328,6 @@ function Desk() {
     accept: ItemTypes.TAG,
     drop: (item: Note, monitor) => {
       const offset = monitor.getClientOffset();
-      console.log(offset);
-      // if (checkPosition(item, offset)) {
-      //   moveTag(item.id, offset.x, offset.y);
-      // }
       moveTag(item.id, offset.x, offset.y);
       return {};
     },
@@ -375,6 +341,7 @@ function Desk() {
       prevTags.map((tag) => {
         if (tag.id === id) {
           const updatedTag = { ...tag, x: left, y: top };
+          sendSocketMessage(socketActions.MOVE, updatedTag);
           handleEditTag.mutate({ id: tag.id, x: left, y: top });
           return updatedTag;
         }
@@ -382,35 +349,6 @@ function Desk() {
       })
     );
   };
-
-  // const checkPosition = (item: Note, offset: XYCoord) => {
-  //   if (!tagRef.current) return true;
-
-  //   const deskRect = tagRef.current.getBoundingClientRect();
-  //   const tagElement = document.getElementById("" + item.id);
-
-  //   if (!tagElement) return true;
-
-  //   const tagRect = tagElement.getBoundingClientRect();
-
-  //   if (offset.x + tagRect.width / 2 > deskRect.right) {
-  //     return false;
-  //   }
-
-  //   if (offset.x - tagRect.width / 2 < deskRect.left) {
-  //     return false;
-  //   }
-
-  //   if (offset.y + tagRect.height / 2 > deskRect.bottom) {
-  //     return false;
-  //   }
-
-  //   if (offset.y - tagRect.height / 2 < deskRect.top) {
-  //     return false;
-  //   }
-
-  //   return true;
-  // };
 
   drop(tagRef);
 
@@ -473,11 +411,22 @@ function Desk() {
 
       <div className="desk" onClick={handleDeskClick} ref={tagRef}>
         {tags?.map((tag) => (
-          <Tag key={tag.id} tag={tag} onFocusChange={handleChangeFocus} />
+          <Tag
+            key={tag.id}
+            tag={tag}
+            onFocusChange={handleChangeFocus}
+            io={socketRef.current}
+          />
         ))}
       </div>
     </div>
   );
+
+  function sendSocketMessage(type: string, payload: any) {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit(type, payload);
+    }
+  }
 }
 
 export default Desk;

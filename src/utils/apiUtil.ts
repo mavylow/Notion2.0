@@ -180,12 +180,12 @@ export const getNote = async (id: number) => {
 };
 
 export const deleteNote = async (id: number) => {
-  return await fetchRESTData(`/api/note/${id}`, "DELETE");
+  await fetchRESTData(`/api/note/${id}`, "DELETE");
+  return id;
 };
 
 export const getDesks = async () => {
   const desks = await fetchRESTData(`/api/desks`, "GET");
-  console.log(desks.data);
   return desks.data;
 };
 export const createDesk = async (newDesk: IDesk) => {

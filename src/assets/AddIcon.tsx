@@ -10,15 +10,15 @@ function AddIcon() {
     >
       <path
         d="M12 6L12 18"
-        stroke-width="2"
-        stroke-linecap="square"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="square"
+        strokeLinejoin="round"
       />
       <path
         d="M18 12L6 12"
-        stroke-width="2"
-        stroke-linecap="square"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="square"
+        strokeLinejoin="round"
       />
     </svg>
   );

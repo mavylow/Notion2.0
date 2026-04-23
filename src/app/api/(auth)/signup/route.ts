@@ -70,7 +70,6 @@ export async function POST(request: NextRequest) {
 
     return res;
   } catch (error) {
-    console.log("Signup error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

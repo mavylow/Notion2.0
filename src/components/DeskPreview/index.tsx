@@ -24,7 +24,6 @@ function DeskPreview({
     <div>
       <div
         onClick={() => {
-          console.log(link);
           onActiveDeskChange(link);
         }}
       >

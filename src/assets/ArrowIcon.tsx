@@ -8,7 +8,7 @@ function ArrowLeftIcon() {
       viewBox="0 0 24 24"
       fill="none"
     >
-      <path d="M15 6L9 12L15 18" stroke-width="2" />
+      <path d="M15 6L9 12L15 18" strokeWidth="2" />
     </svg>
   );
 }

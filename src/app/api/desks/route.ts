@@ -25,26 +25,38 @@ export async function GET(request) {
 
     const { data: authorId } = await jwt.decode(token, SECRET_KEY);
 
-    const queryDesk = `
+    const queryOwnDesk = `
           SELECT * 
           FROM desks
           WHERE "authorId" = $1
           `;
 
-    const result = await pool.query(queryDesk, [authorId]);
+    const resultOwnDesks = await pool.query(queryOwnDesk, [authorId]);
 
-    if (!result) {
+    const queryOtherDesks = `
+    SELECT desks.id, link, "authorId", name, "creationDate" 
+FROM permissions
+LEFT JOIN desks on desks."id" = permissions."deskId"
+WHERE "userId" = $1
+    `;
+
+    const resultOtherDesks = await pool.query(queryOtherDesks, [authorId]);
+
+    if (!resultOwnDesks || !resultOtherDesks) {
       return NextResponse.json(
-        { error: "Error fetching comments" },
+        { error: "Error fetching desks" },
         { status: 403 }
       );
     }
 
-    if (!result.rows) {
+    if (!resultOwnDesks.rows && !resultOtherDesks.rows) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ success: true, data: result.rows });
+    return NextResponse.json({
+      success: true,
+      data: resultOwnDesks.rows.concat(resultOtherDesks.rows),
+    });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json({ error: "Validation error" }, { status: 400 });
@@ -107,7 +119,6 @@ export async function POST(request) {
     if (e instanceof ZodError) {
       return NextResponse.json({ error: "Validation error" }, { status: 400 });
     }
-    console.log(e);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
