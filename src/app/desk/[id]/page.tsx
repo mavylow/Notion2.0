@@ -1,10 +1,10 @@
 "use client";
 
-import NotePreview from "@/components/NotePreview";
+import NotePreview from "@/components/Preview";
 import Tag from "@/components/Tag";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ItemTypes, socketActions } from "@utils/config";
 import "@app/desk/style.css";
 import { useDrop } from "react-dnd";
@@ -19,6 +19,7 @@ import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
 import { io } from "socket.io-client";
 import * as Y from "yjs";
+import Preview from "@/components/Preview";
 
 function Desk() {
   const { id } = useParams();
@@ -28,6 +29,9 @@ function Desk() {
   const router = useRouter();
   const { user } = useContext(AuthContext);
   const [tags, setTags] = useState([]);
+  const deskTags = useMemo(() => {
+    return tags?.filter((tag: Note) => tag.desk);
+  }, [tags]);
   const { data: activeNote, loading: noteLoading } = useSelector(
     (state: RootState) => state.note
   );
@@ -90,16 +94,18 @@ function Desk() {
     socket.on(socketActions.ADD, (data) => {
       console.log(data);
       setTags((prev) => [...prev, { ...data, isActive: false }]);
-      refetchNotes();
     });
 
-    socket.on(socketActions.DELETE, (data) => {
-      setTags((prev) => prev.filter((tag) => tag.id !== data.id));
-      refetchNotes();
+    socket.on(socketActions.DELETE, ({ id, _ }) => {
+      setTags((prev) => prev.filter((tag) => tag.id !== id));
     });
 
     socket.on(socketActions.MOVE, (data) => {
-      setTags((prev) => prev.map((tag) => (tag.id === data.id ? data : tag)));
+      setTags((prev) =>
+        prev.map((tag) =>
+          tag.id === data.id ? { ...tag, x: data.x, y: data.y } : tag
+        )
+      );
     });
 
     socket.on("joined", (data) => {
@@ -258,7 +264,7 @@ function Desk() {
     },
     onSuccess: (data, variables) => {
       const deletedId = variables;
-      sendSocketMessage(socketActions.DELETE, { id: deletedId });
+      sendSocketMessage(socketActions.DELETE, { id: deletedId, deskId });
       setTags((prev) => prev.filter((tag) => tag.id !== deletedId));
     },
   });
@@ -288,9 +294,7 @@ function Desk() {
 
   useEffect(() => {
     if (notes) {
-      const allTags = notes
-        ?.filter((tag: Note) => tag.desk)
-        ?.map((tag: Note) => ({ ...tag, isActive: false }));
+      const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
       setTags(allTags || []);
     }
   }, [notes]);
@@ -400,16 +404,15 @@ function Desk() {
               <div>Loading...</div>
             ) : (
               <>
-                {notes?.length > 0 ? (
-                  notes.map((note) => (
-                    <NotePreview
-                      onNotePreviewClick={(id, desk) =>
-                        handleNotePreviewClick(id, desk)
-                      }
-                      key={note.id}
-                      {...note}
-                      userId={7}
+                {tags?.length > 0 ? (
+                  tags.map((tag) => (
+                    <Preview
+                      key={tag.id}
+                      id={tag.id}
+                      {...tag}
                       onDelete={(id) => handleDeleteNote.mutate(id)}
+                      onClick={(id, desk) => handleNotePreviewClick(id, desk)}
+                      type="note"
                     />
                   ))
                 ) : (
@@ -422,7 +425,7 @@ function Desk() {
       </div>
 
       <div className="desk" onClick={handleDeskClick} ref={tagRef}>
-        {tags?.map((tag) => (
+        {deskTags?.map((tag) => (
           <Tag
             key={tag.id}
             tag={tag}
@@ -439,10 +442,6 @@ function Desk() {
       console.log(type);
       socketRef.current.emit(type, payload);
     }
-  }
-
-  function addSocketNote(note: INote) {
-    setTags((prev) => [...prev, { ...note, isActive: false }]);
   }
 }
 

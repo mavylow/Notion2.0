@@ -3,6 +3,7 @@
   width: 100vw;
   display: flex;
   flex-direction: row;
+  overflow: visible;
 }
 
 .desk-container > div {
@@ -10,9 +11,10 @@
 }
 
 .desk-aside {
-  width: 20vw;
-  overflow-y: scroll;
   height: 100%;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
 }
 
 .desk {
@@ -32,4 +34,17 @@
   left: 50%;
   transform: translate(-50%, -50%);
   color: var(--light-text-color);
+}
+
+.desk-aside::-webkit-scrollbar {
+  width: 8px;
+}
+
+.desk-aside::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.desk-aside::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
 }

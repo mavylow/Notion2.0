@@ -13,6 +13,7 @@ import HamburgerMenuIcon from "@/assets/HamburgerMenuIcon";
 
 import CreateDesk from "@/components/CreateDesk";
 import { useRouter } from "next/navigation";
+import Preview from "@/components/Preview";
 
 function DeskList() {
   const router = useRouter();
@@ -56,11 +57,11 @@ function DeskList() {
           <aside className="desk-aside">
             {desks?.length > 0 ? (
               desks.map((desk) => (
-                <DeskPreview
-                  onActiveDeskChange={(link) => router.push(`desk/${link}`)}
-                  key={desk.id}
+                <Preview
                   {...desk}
                   onDelete={(id) => console.log("handleDeleteDesk.mutate(id)")}
+                  onClick={(link) => router.push(`desk/${link}`)}
+                  type="desk"
                 />
               ))
             ) : (

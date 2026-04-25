@@ -1,0 +1,54 @@
+.side-preview-container {
+  width: 100%;
+  display: flex;
+  background-color: var(--background-root);
+  gap: 10px;
+  overflow: visible;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  min-height: 50px;
+  padding: 0 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.side-preview time {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  display: block;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.side-preview h1 {
+  font-size: clamp(14px, 1.2vw, 16px);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.side-preview-container button {
+  height: 15px;
+  width: 15px;
+}
+
+.time {
+  right: 8px;
+  top: 50%;
+  right: -100px;
+  font-size: 11px;
+  color: var(--light-text-color);
+  background-color: var(--background-main);
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.side-preview-container:hover {
+  background-color: var(--background-main);
+}

@@ -44,19 +44,20 @@ app.prepare().then(() => {
     });
 
     socket.on("add_note", (note) => {
-      console.log("server", note);
+      console.log("server add_note", note);
       io.to(`${note.deskId}`).emit("add_note", {
         ...note,
       });
     });
 
-    socket.on("delete_note", (note) => {
-      io.to(`${note.deskId}`).emit("delete_note", {
-        ...note,
+    socket.on("delete_note", ({ id, deskId }) => {
+      console.log("server delete_note", id, deskId);
+      io.to(`${deskId}`).emit("delete_note", {
+        id,
       });
     });
     socket.on("move_note", (note) => {
-      console.log(note);
+      console.log("server move_note", note, note.deskId);
       io.to(`${note.deskId}`).emit("move_note", {
         ...note,
       });

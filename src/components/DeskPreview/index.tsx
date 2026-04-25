@@ -1,6 +1,8 @@
 "use client";
 
+import TrashIcon from "@/assets/TrashIcon";
 import Markdown from "react-markdown";
+import Button from "../Button";
 
 function DeskPreview({
   id,
@@ -21,28 +23,29 @@ function DeskPreview({
   };
 
   return (
-    <div>
-      <div
+    <div className="side-preview-container">
+      <section
+        className="side-preview"
         onClick={() => {
           onActiveDeskChange(link);
         }}
       >
-        <div>
+        <h1>
           <Markdown>{name}</Markdown>
-        </div>
-        <div>
-          <div>{formattedDate}</div>
-        </div>
-      </div>
-      <div>
-        <button onClick={() => handleDeleteDesk(id)}>🗑️</button>
-        <button
-          onClick={() => {
-            console.log("edit desk");
+        </h1>
+
+        <time className="time" dateTime={`${creationDate}`}>
+          {formattedDate}
+        </time>
+      </section>
+      <div className="preview-buttons">
+        <Button
+          type="button"
+          Icon={TrashIcon}
+          onButtonClick={() => {
+            handleDeleteDesk(id);
           }}
-        >
-          ✍️
-        </button>
+        />
       </div>
     </div>
   );
