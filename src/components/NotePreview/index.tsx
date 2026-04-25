@@ -35,14 +35,7 @@ export default function NotePreview({
 
   return (
     <div>
-      <div
-        onClick={() => {
-          location === "/notes" && navigate.replace(`/notes/${id}`);
-        }}
-        onDoubleClick={() => {
-          location === "/desk" && onNotePreviewClick(id, desk);
-        }}
-      >
+      <div onClick={() => onNotePreviewClick(id, desk)}>
         <div>
           <Markdown>{title}</Markdown>
         </div>

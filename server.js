@@ -25,30 +25,40 @@ app.prepare().then(() => {
   });
 
   io.on("connection", (socket) => {
-    console.log("✅ User connected:", socket.id);
-
-    socket.on("active_note_changed", (data) => {
-      console.log("📨 Message:", data);
-
-      io.emit("active_note_changed", {
-        ...data,
-      });
-    });
-    socket.on("add_note", (data) => {
-      io.emit("add_note", {
-        ...data,
+    socket.on("join desk", ({ deskId, username }) => {
+      socket.join(String(deskId));
+      io.to(String(deskId)).emit("joined", {
+        socketId: socket.id,
+        deskId,
+        username,
       });
     });
 
-    socket.on("delete_note", (data) => {
-      io.emit("delete_note", {
-        ...data,
+    socket.on("active_note_changed", ({ id, name, value, deskId }) => {
+      console.log(id, name, value, deskId);
+      io.to(String(deskId)).emit("active_note_changed", {
+        id,
+        name,
+        value,
       });
     });
-    socket.on("move_note", (data) => {
-      console.log(data);
-      io.emit("move_note", {
-        ...data,
+
+    socket.on("add_note", (note) => {
+      console.log("server", note);
+      io.to(`${note.deskId}`).emit("add_note", {
+        ...note,
+      });
+    });
+
+    socket.on("delete_note", (note) => {
+      io.to(`${note.deskId}`).emit("delete_note", {
+        ...note,
+      });
+    });
+    socket.on("move_note", (note) => {
+      console.log(note);
+      io.to(`${note.deskId}`).emit("move_note", {
+        ...note,
       });
     });
 

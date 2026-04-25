@@ -20,7 +20,7 @@ function Tag({
   onFocusChange: (id: number) => void;
   io: Socket;
 }) {
-  const { title, body, id, x, y, isActive } = tag;
+  const { title, body, id, x, y, deskId, isActive } = tag;
   const { data: activeNote } = useSelector((state: RootState) => state.note);
   const dispatch = useDispatch();
 
@@ -43,7 +43,7 @@ function Tag({
     const { name, value } = e.target;
     console.log("active tag", activeNote);
     dispatch(noteInputChange({ name, value }));
-    io.emit(socketActions.CHANGE, { id, name, value });
+    io.emit(socketActions.CHANGE, { id, name, value, deskId });
   };
 
   drag(ref);

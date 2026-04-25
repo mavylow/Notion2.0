@@ -45,6 +45,12 @@ function Desk() {
   }, [activeNote]);
 
   useEffect(() => {
+    if (deskId && isConnected) {
+      sendSocketMessage("join desk", { deskId, username: user.username });
+    }
+  }, [isConnected, deskId]);
+
+  useEffect(() => {
     const socket = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
       autoConnect: true,
@@ -56,25 +62,25 @@ function Desk() {
       setIsConnected(true);
     });
 
-    socket.on(socketActions.CHANGE, (data) => {
-      if (data.id) {
+    socket.on(socketActions.CHANGE, ({ id, name, value, deskId }) => {
+      if (id) {
         setTags((prevTags) =>
           prevTags.map((tag) => {
-            if (tag.id === data.id) {
+            if (tag.id === id) {
               return {
                 ...tag,
-                [data.name]: data.value,
+                [name]: value,
               };
             }
             return tag;
           })
         );
 
-        if (activeNoteRef.current?.id === data.id) {
+        if (activeNoteRef.current?.id === id) {
           dispatch(
             setFullNote({
               ...activeNoteRef.current,
-              [data.name]: data.value,
+              [name]: value,
             })
           );
         }
@@ -82,7 +88,9 @@ function Desk() {
     });
 
     socket.on(socketActions.ADD, (data) => {
+      console.log(data);
       setTags((prev) => [...prev, { ...data, isActive: false }]);
+      refetchNotes();
     });
 
     socket.on(socketActions.DELETE, (data) => {
@@ -92,6 +100,10 @@ function Desk() {
 
     socket.on(socketActions.MOVE, (data) => {
       setTags((prev) => prev.map((tag) => (tag.id === data.id ? data : tag)));
+    });
+
+    socket.on("joined", (data) => {
+      console.log(`${data.username} has joined desk with id ${data.deskId}`);
     });
 
     socket.on("disconnect", () => {
@@ -424,8 +436,13 @@ function Desk() {
 
   function sendSocketMessage(type: string, payload: any) {
     if (socketRef.current && isConnected) {
+      console.log(type);
       socketRef.current.emit(type, payload);
     }
+  }
+
+  function addSocketNote(note: INote) {
+    setTags((prev) => [...prev, { ...note, isActive: false }]);
   }
 }
 
