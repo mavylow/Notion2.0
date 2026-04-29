@@ -4,6 +4,7 @@ import Markdown from "react-markdown";
 import Button from "@components/Button";
 import TrashIcon from "@/assets/TrashIcon";
 import "@components/Preview/style.css";
+import { useEffect, useMemo } from "react";
 
 interface PreviewProps {
   id: number;
@@ -30,22 +31,24 @@ function Preview({
   onClick,
   type,
 }: PreviewProps) {
-  const displayTitle = type === "note" ? title : name;
-
   const date = type === "note" ? createdAt : creationDate;
   const formattedDate = date ? new Date(date).toLocaleString() : "";
 
-  const formattedTitle = () => {
-    if (!displayTitle) return "Без названия";
+  const formattedTitle = (h1) => {
+    if (!h1) return "Без названия";
 
-    if (displayTitle.includes("\n")) {
-      return displayTitle.split("\n")[0] + "...";
+    if (h1.includes("\n")) {
+      return h1.split("\n")[0] + "...";
     }
-    if (displayTitle.length > 20) {
-      return displayTitle.slice(0, 20) + "...";
+    if (h1.length > 15) {
+      return h1.slice(0, 15) + "...";
     }
-    return displayTitle;
+    return h1;
   };
+
+  const displayTitle = useMemo(() => {
+    return formattedTitle(type === "note" ? title : name);
+  }, [title]);
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,11 +66,9 @@ function Preview({
   };
 
   return (
-    <div className="side-preview-container">
-      <section className="side-preview" onClick={handleClick}>
-        <h1>
-          <Markdown>{formattedTitle()}</Markdown>
-        </h1>
+    <div className="side-preview-container" id={`${id}`} onClick={handleClick}>
+      <section className="side-preview">
+        <h1>{formattedTitle(displayTitle)}</h1>
         {formattedDate && (
           <time className="time" dateTime={date}>
             {formattedDate}

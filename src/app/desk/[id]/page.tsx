@@ -1,6 +1,6 @@
 "use client";
 
-import NotePreview from "@/components/Preview";
+import NotePreview from "@/components/NotePreview";
 import Tag from "@/components/Tag";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -8,39 +8,41 @@ import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ItemTypes, socketActions } from "@utils/config";
 import "@app/desk/style.css";
 import { useDrop } from "react-dnd";
-import { INote, Note } from "@/interfaces";
+import { INote, ITag, Note } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchNote, resetNote, setFullNote } from "@/slices/noteSlice";
-import { deleteNote } from "@/utils/apiUtil";
+import { deleteNote, getAllNotes } from "@/utils/apiUtil";
 import Button from "@/components/Button";
 import HamburgerMenuIcon from "@/assets/HamburgerMenuIcon";
 import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
-import { io } from "socket.io-client";
-import * as Y from "yjs";
 import Preview from "@/components/Preview";
+import { SocketContext } from "@/providers/SocketProvider";
 
 function Desk() {
   const { id } = useParams();
-
+  const { user } = useContext(AuthContext);
+  const { socket, isConnected, sendSocketMessage } = useContext(SocketContext);
   const [deskId, setDeskId] = useState(null);
+  const [tags, setTags] = useState([]);
+
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const { user } = useContext(AuthContext);
-  const [tags, setTags] = useState([]);
-  const deskTags = useMemo(() => {
-    return tags?.filter((tag: Note) => tag.desk);
-  }, [tags]);
+
   const { data: activeNote, loading: noteLoading } = useSelector(
     (state: RootState) => state.note
   );
+
+  const deskTags = useMemo(() => {
+    return tags?.filter((tag: ITag) => tag.desk);
+  }, [tags]);
+
   const [lastClickTime, setLastClickTime] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
-  const tagRef = useRef(null);
 
-  const socketRef = useRef(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isNoteFullScreen, setNoteFullScreen] = useState(null);
+  const tagDragRef = useRef(null);
 
   const activeNoteRef = useRef(activeNote);
 
@@ -55,21 +57,11 @@ function Desk() {
   }, [isConnected, deskId]);
 
   useEffect(() => {
-    const socket = io("http://localhost:3000", {
-      transports: ["websocket", "polling"],
-      autoConnect: true,
-    });
-
-    socketRef.current = socket;
-
-    socket.on("connect", () => {
-      setIsConnected(true);
-    });
-
-    socket.on(socketActions.CHANGE, ({ id, name, value, deskId }) => {
+    // Создаем обработчики как отдельные функции для возможности отписки
+    const handleChange = ({ id, name, value, deskId }) => {
       if (id) {
-        setTags((prevTags) =>
-          prevTags.map((tag) => {
+        setTags((prevTags) => {
+          const newTags = prevTags.map((tag) => {
             if (tag.id === id) {
               return {
                 ...tag,
@@ -77,56 +69,57 @@ function Desk() {
               };
             }
             return tag;
-          })
-        );
+          });
 
-        if (activeNoteRef.current?.id === id) {
-          dispatch(
-            setFullNote({
-              ...activeNoteRef.current,
-              [name]: value,
-            })
-          );
-        }
+          if (activeNoteRef.current?.id === id) {
+            dispatch(
+              setFullNote({
+                ...activeNoteRef.current,
+                [name]: value,
+              })
+            );
+          }
+
+          return newTags;
+        });
       }
-    });
+    };
 
-    socket.on(socketActions.ADD, (data) => {
-      console.log(data);
+    const handleAdd = (data) => {
+      console.log("1");
       setTags((prev) => [...prev, { ...data, isActive: false }]);
-    });
+    };
 
-    socket.on(socketActions.DELETE, ({ id, _ }) => {
+    const handleDelete = ({ id, _ }) => {
       setTags((prev) => prev.filter((tag) => tag.id !== id));
-    });
+    };
 
-    socket.on(socketActions.MOVE, (data) => {
+    const handleMove = (data) => {
       setTags((prev) =>
         prev.map((tag) =>
           tag.id === data.id ? { ...tag, x: data.x, y: data.y } : tag
         )
       );
-    });
+    };
 
-    socket.on("joined", (data) => {
+    const handleJoined = (data) => {
       console.log(`${data.username} has joined desk with id ${data.deskId}`);
-    });
+    };
 
-    socket.on("disconnect", () => {
-      console.log("Disconnected");
-      setIsConnected(false);
-    });
-
-    socket.on("connect_error", (error) => {
-      console.error("Connection error:", error);
-    });
+    socket.on(socketActions.CHANGE, handleChange);
+    socket.on(socketActions.ADD, handleAdd);
+    socket.on(socketActions.DELETE, handleDelete);
+    socket.on(socketActions.MOVE, handleMove);
+    socket.on("joined", handleJoined);
 
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      socket.off(socketActions.CHANGE, handleChange);
+      socket.off(socketActions.ADD, handleAdd);
+      socket.off(socketActions.DELETE, handleDelete);
+      socket.off(socketActions.MOVE, handleMove);
+      socket.off("joined", handleJoined);
     };
-  }, [dispatch]);
+  }, [dispatch, deskId, socket]);
 
   const handleAddTag = useMutation({
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
@@ -154,7 +147,6 @@ function Desk() {
 
     onSuccess: (data) => {
       sendSocketMessage(socketActions.ADD, data);
-      refetchNotes();
     },
   });
 
@@ -182,8 +174,21 @@ function Desk() {
     },
   });
 
+  useEffect(() => {
+    if (!isNotesLoading) {
+      const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
+      setTags(allTags || []);
+    }
+  }, [isNotesLoading]);
+
   const handleSetDesk = useMutation({
-    mutationFn: async ({ id, desk }: { id: number; desk: boolean }) => {
+    mutationFn: async ({
+      id,
+      desk,
+    }: {
+      id: number | string;
+      desk: boolean;
+    }) => {
       const res = await fetch(`/api/note/${id}`, {
         method: "PATCH",
         headers: {
@@ -264,6 +269,7 @@ function Desk() {
     },
     onSuccess: (data, variables) => {
       const deletedId = variables;
+
       sendSocketMessage(socketActions.DELETE, { id: deletedId, deskId });
       setTags((prev) => prev.filter((tag) => tag.id !== deletedId));
     },
@@ -293,29 +299,6 @@ function Desk() {
   };
 
   useEffect(() => {
-    if (notes) {
-      const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
-      setTags(allTags || []);
-    }
-  }, [notes]);
-
-  const handleDeskClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest(".tag")) {
-      return;
-    }
-
-    const now = Date.now();
-    const timeSinceLastClick = now - lastClickTime;
-
-    if (timeSinceLastClick < 300) {
-      handleAddTag.mutate(e);
-      setLastClickTime(0);
-    } else {
-      setLastClickTime(now);
-    }
-  };
-
-  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".tag-editable")) {
         if (activeNote?.id && !noteLoading) {
@@ -340,47 +323,69 @@ function Desk() {
     setTags((prevTags) => prevTags.map((tag) => ({ ...tag, isActive: false })));
   };
 
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.TAG,
-    drop: (item: Note, monitor) => {
-      const offset = monitor.getClientOffset();
-      moveTag(item.id, offset.x, offset.y);
-      return {};
-    },
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: ItemTypes.TAG,
+      drop: (item: ITag, monitor) => {
+        const offset = monitor.getClientOffset();
+        moveTag(item.id, offset.x, offset.y);
+        return {};
+      },
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
     }),
-  }));
+    [deskId, isConnected]
+  );
 
-  const moveTag = (id, left, top) => {
+  const moveTag = (id: number, left: number, top: number) => {
     setTags((prevTags) =>
-      prevTags.map((tag) => {
-        if (tag.id === id) {
-          const updatedTag = { ...tag, x: left, y: top };
-          sendSocketMessage(socketActions.MOVE, updatedTag);
-          handleEditTag.mutate({ id: tag.id, x: left, y: top });
-          return updatedTag;
-        }
-        return tag;
-      })
+      prevTags.map((tag) => (tag.id === id ? { ...tag, x: left, y: top } : tag))
     );
+
+    handleEditTag.mutate({ id, x: left, y: top });
+    sendSocketMessage(socketActions.MOVE, { id, x: left, y: top, deskId });
   };
 
-  drop(tagRef);
+  drop(tagDragRef);
 
   const handleExpand = () => {
     setIsExpanded((prev) => !prev);
   };
 
-  const handleNotePreviewClick = (id: number, desk: boolean) => {
-    handleSetDesk.mutate({ id, desk });
-    setTags((prev) =>
-      prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
-    );
+  useEffect(() => {
+    if (!activeNote.id && noteLoading) {
+      handleGoBackToDesk();
+    }
+  }, [activeNote.id, noteLoading]);
+
+  const handleNotePreviewClick = async (id: number | string, desk: boolean) => {
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickTime;
+
+    if (timeSinceLastClick < 300) {
+      setLastClickTime(0);
+      handleSetDesk.mutate({ id, desk });
+      setTags((prev) =>
+        prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
+      );
+    } else {
+      console.log(isNoteFullScreen);
+      setNoteFullScreen((prev) => !prev);
+      if (activeNote.id !== id) {
+        await dispatch(fetchNote(id));
+      }
+
+      setLastClickTime(now);
+    }
   };
 
   const backToDesks = () => {
     router.replace("/desk");
+  };
+
+  const handleGoBackToDesk = () => {
+    setNoteFullScreen(false);
   };
 
   return (
@@ -423,26 +428,25 @@ function Desk() {
           </aside>
         )}
       </div>
-
-      <div className="desk" onClick={handleDeskClick} ref={tagRef}>
-        {deskTags?.map((tag) => (
-          <Tag
-            key={tag.id}
-            tag={tag}
-            onFocusChange={handleChangeFocus}
-            io={socketRef.current}
-          />
-        ))}
-      </div>
+      {isNoteFullScreen ? (
+        <NotePreview tag={activeNote} onBackButtonClick={handleGoBackToDesk} />
+      ) : (
+        <div
+          className="desk"
+          onDoubleClick={(e) => {
+            if (!(e.target as HTMLElement).closest(".tag")) {
+              handleAddTag.mutate(e);
+            }
+          }}
+          ref={tagDragRef}
+        >
+          {deskTags?.map((tag) => (
+            <Tag key={tag.id} tag={tag} onFocusChange={handleChangeFocus} />
+          ))}
+        </div>
+      )}
     </div>
   );
-
-  function sendSocketMessage(type: string, payload: any) {
-    if (socketRef.current && isConnected) {
-      console.log(type);
-      socketRef.current.emit(type, payload);
-    }
-  }
 }
 
 export default Desk;

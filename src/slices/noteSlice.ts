@@ -1,4 +1,4 @@
-import { INote, ITag } from "@/interfaces";
+import { ITag } from "@/interfaces";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { getNote } from "@utils/apiUtil";
 
@@ -13,9 +13,9 @@ interface NoteInputPayload {
   value: string | boolean | number;
 }
 
-export const fetchNote = createAsyncThunk<ITag, number>(
+export const fetchNote = createAsyncThunk<ITag, number | string>(
   "note/fetchNote",
-  async (id: number) => {
+  async (id: number | string) => {
     const note = await getNote(id);
     return note;
   }

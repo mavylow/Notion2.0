@@ -7,4 +7,5 @@ export const socketActions = {
   ADD: "add_note",
   DELETE: "delete_note",
   MOVE: "move_note",
+  YJS: "yjs_note",
 };

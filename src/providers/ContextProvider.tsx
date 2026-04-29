@@ -6,6 +6,7 @@ import ThemeProvider from "@providers/ThemeProvider";
 import PopUpProvider from "@providers/PopupProvider";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
+import SocketProvider from "./SocketProvider";
 
 interface IContextProvider {
   children: ReactNode;
@@ -15,7 +16,9 @@ function ContextProvider({ children }: IContextProvider) {
     <DndProvider backend={HTML5Backend}>
       <PopUpProvider>
         <AuthProvider>
-          <ThemeProvider>{children}</ThemeProvider>
+          <SocketProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </SocketProvider>
         </AuthProvider>
       </PopUpProvider>
     </DndProvider>

@@ -2,12 +2,14 @@ import authReducer from "@slices/authSlice";
 import modalReducer from "@slices/modalSlice";
 import { configureStore } from "@reduxjs/toolkit";
 import noteSlice from "@slices/noteSlice";
+import tagsSlice from "@/slices/tagsSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     modal: modalReducer,
     note: noteSlice,
+    tags: tagsSlice,
   },
 });
 

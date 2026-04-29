@@ -1,0 +1,20 @@
+.tag-editable.full {
+  width: 100%;
+  color: var(--text-color);
+}
+
+.note-fullscreen textarea {
+  appearance: none;
+  background-color: var(--background-root);
+  color: var(--text-color);
+  border: none;
+  width: 100%;
+  height: auto;
+  resize: none;
+  overflow: hidden;
+}
+
+.note-fullscreen textarea::placeholder {
+  appearance: none;
+  color: var(--text-color);
+}

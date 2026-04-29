@@ -1,5 +1,6 @@
 import { IDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
+import { ParamValue } from "next/dist/server/request/params";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
 export const API_URL = "http://localhost:3001";
@@ -174,7 +175,7 @@ export const getNotes = (page: number, per_page: number) => {
   return res;
 };
 
-export const getNote = async (id: number) => {
+export const getNote = async (id: number | string) => {
   const note = await fetchRESTData(`/api/note/${id}`, "GET");
   return note.data;
 };
@@ -195,4 +196,20 @@ export const createDesk = async (newDesk: IDesk) => {
     JSON.stringify(newDesk)
   );
   return desk;
+};
+
+export const getAllNotes = async (id: ParamValue) => {
+  const res = await fetch(`/api/all_notes/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+
+  const result = await res.json();
+  return result.data;
 };

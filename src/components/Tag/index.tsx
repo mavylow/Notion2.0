@@ -3,24 +3,24 @@
 import Markdown from "react-markdown";
 import { useDispatch, useSelector } from "react-redux";
 import { noteInputChange } from "@slices/noteSlice";
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { useDrag } from "react-dnd";
 import "@components/Tag/style.css";
 import { RootState } from "@/store";
 import { ITag, IUser } from "@/interfaces";
 import { Socket } from "socket.io-client";
 import { socketActions } from "@/utils/config";
+import { SocketContext } from "@/providers/SocketProvider";
 
 function Tag({
   tag,
   onFocusChange,
-  io,
 }: {
   tag: ITag;
   onFocusChange: (id: number) => void;
-  io: Socket;
 }) {
   const { title, body, id, x, y, deskId, isActive } = tag;
+  const { sendSocketMessage } = useContext(SocketContext);
   const { data: activeNote } = useSelector((state: RootState) => state.note);
   const dispatch = useDispatch();
 
@@ -41,9 +41,8 @@ function Tag({
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
-    console.log("active tag", activeNote);
     dispatch(noteInputChange({ name, value }));
-    io.emit(socketActions.CHANGE, { id, name, value, deskId });
+    sendSocketMessage(socketActions.CHANGE, { id, name, value, deskId });
   };
 
   drag(ref);
