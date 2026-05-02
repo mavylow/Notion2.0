@@ -1,4 +1,4 @@
-.tag {
+.tag-editable {
   position: absolute;
   display: flex;
   flex-direction: column;
@@ -6,21 +6,17 @@
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  min-width: 200px;
-  min-height: 150px;
-  width: auto;
-  height: auto;
   resize: both;
   overflow: auto;
   z-index: 10;
 }
 
-.tag:hover {
+.tag-editable:hover {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   z-index: 10;
 }
 
-.tag.tag-editable {
+.tag-editable {
   background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px #333;
   z-index: 20;
@@ -56,7 +52,7 @@
   overflow-y: auto;
 }
 
-.tag textarea {
+.tag-editable textarea {
   font-family: inherit;
   font-size: 0.875rem;
   background: white;
@@ -68,35 +64,35 @@
   padding: 0.5rem;
 }
 
-.tag textarea:last-of-type {
+.tag-editable textarea:last-of-type {
   margin-bottom: 0.75rem;
   flex: 1;
   min-height: 100px;
 }
 
-.tag textarea:focus {
+.tag-editable textarea:focus {
   outline: none;
   border-color: #666;
 }
 
-.tag textarea[name="title"] {
+.tag-editable textarea[name="title"] {
   font-weight: 600;
   font-size: 1rem;
 }
 
 /* Скроллбар */
-.tag .tag-body::-webkit-scrollbar,
-.tag textarea::-webkit-scrollbar {
+.tag-editable .tag-body::-webkit-scrollbar,
+.tag-editable textarea::-webkit-scrollbar {
   width: 5px;
 }
 
 .tag .tag-body::-webkit-scrollbar-track,
-.tag textarea::-webkit-scrollbar-track {
+.tag-editable textarea::-webkit-scrollbar-track {
   background: #e5e5e5;
 }
 
 .tag .tag-body::-webkit-scrollbar-thumb,
-.tag textarea::-webkit-scrollbar-thumb {
+.tag-editable textarea::-webkit-scrollbar-thumb {
   background: #bbb;
 }
 

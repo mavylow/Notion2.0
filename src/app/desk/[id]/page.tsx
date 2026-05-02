@@ -4,21 +4,31 @@ import NotePreview from "@/components/NotePreview";
 import Tag from "@/components/Tag";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { ItemTypes, socketActions } from "@utils/config";
 import "@app/desk/style.css";
 import { useDrop } from "react-dnd";
-import { INote, ITag, Note } from "@/interfaces";
+import { ITag, Note } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchNote, resetNote, setFullNote } from "@/slices/noteSlice";
-import { deleteNote, getAllNotes } from "@/utils/apiUtil";
+import { deleteNote } from "@/utils/apiUtil";
 import Button from "@/components/Button";
 import HamburgerMenuIcon from "@/assets/HamburgerMenuIcon";
 import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
 import Preview from "@/components/Preview";
 import { SocketContext } from "@/providers/SocketProvider";
+import { Stage, Layer, Text, Shape, Group, Rect } from "react-konva";
+import KonvaTag from "@/components/KonvaTag";
+import ActiveTag from "@/components/ActiveTag";
 
 function Desk() {
   const { id } = useParams();
@@ -27,6 +37,11 @@ function Desk() {
   const [deskId, setDeskId] = useState(null);
   const [tags, setTags] = useState([]);
 
+  const [stageState, setStageState] = useState({
+    x: 0,
+    y: 0,
+    scale: 1,
+  });
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
@@ -45,6 +60,37 @@ function Desk() {
   const tagDragRef = useRef(null);
 
   const activeNoteRef = useRef(activeNote);
+  var stageRef = useRef(null);
+
+  var scaleBy = 1.05;
+
+  var handleWheel = function (e) {
+    e.evt.preventDefault();
+    var stage = stageRef.current;
+    var oldScale = stage.scaleX();
+    var pointer = stage.getPointerPosition();
+    var mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+    var direction = e.evt.deltaY > 0 ? -1 : 1;
+    if (e.evt.ctrlKey) {
+      direction = -direction;
+    }
+    var newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    newScale = Math.max(0.1, Math.min(10, newScale));
+
+    stage.scale({ x: newScale, y: newScale });
+    stage.position({
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    });
+    setStageState({
+      x: stage.x(),
+      y: stage.y(),
+      scale: stage.scaleX(),
+    });
+  };
 
   useEffect(() => {
     activeNoteRef.current = activeNote;
@@ -57,7 +103,6 @@ function Desk() {
   }, [isConnected, deskId]);
 
   useEffect(() => {
-    // Создаем обработчики как отдельные функции для возможности отписки
     const handleChange = ({ id, name, value, deskId }) => {
       if (id) {
         setTags((prevTags) => {
@@ -327,9 +372,12 @@ function Desk() {
     () => ({
       accept: ItemTypes.TAG,
       drop: (item: ITag, monitor) => {
-        const offset = monitor.getClientOffset();
-        moveTag(item.id, offset.x, offset.y);
-        return {};
+        const clientOffset = monitor.getClientOffset();
+        if (!clientOffset) return;
+
+        const pos = screenToCanvas(clientOffset.x, clientOffset.y);
+        moveTag(item.id, pos.x, pos.y);
+        console.log("move", pos.x, pos.y);
       },
       collect: (monitor) => ({
         isOver: !!monitor.isOver(),
@@ -338,12 +386,14 @@ function Desk() {
     [deskId, isConnected]
   );
 
-  const moveTag = (id: number, left: number, top: number) => {
+  const moveTag = (id: number, left: number, top: number, isWheel = false) => {
     setTags((prevTags) =>
       prevTags.map((tag) => (tag.id === id ? { ...tag, x: left, y: top } : tag))
     );
+    if (!isWheel) {
+      handleEditTag.mutate({ id, x: left, y: top });
+    }
 
-    handleEditTag.mutate({ id, x: left, y: top });
     sendSocketMessage(socketActions.MOVE, { id, x: left, y: top, deskId });
   };
 
@@ -388,9 +438,24 @@ function Desk() {
     setNoteFullScreen(false);
   };
 
+  const screenToCanvas = useCallback((x: number, y: number) => {
+    const stage = stageRef.current;
+    if (!stage) return { x, y };
+
+    const transform = stage.getAbsoluteTransform().copy();
+    transform.invert();
+    return transform.point({ x, y });
+  }, []);
+
+  const canvasToScreen = (canvasX, canvasY) => {
+    const stage = stageRef.current;
+    const transform = stage.getAbsoluteTransform();
+    return transform.point({ x: canvasX, y: canvasY });
+  };
+
   return (
-    <div className="desk-container">
-      <div>
+    <>
+      <div className="side-container">
         <Button
           type="button"
           onButtonClick={handleExpand}
@@ -417,6 +482,7 @@ function Desk() {
                       {...tag}
                       onDelete={(id) => handleDeleteNote.mutate(id)}
                       onClick={(id, desk) => handleNotePreviewClick(id, desk)}
+                      onDoubleClick={() => console.log("double click")}
                       type="note"
                     />
                   ))
@@ -428,24 +494,79 @@ function Desk() {
           </aside>
         )}
       </div>
-      {isNoteFullScreen ? (
-        <NotePreview tag={activeNote} onBackButtonClick={handleGoBackToDesk} />
-      ) : (
-        <div
-          className="desk"
-          onDoubleClick={(e) => {
-            if (!(e.target as HTMLElement).closest(".tag")) {
-              handleAddTag.mutate(e);
-            }
-          }}
-          ref={tagDragRef}
-        >
-          {deskTags?.map((tag) => (
-            <Tag key={tag.id} tag={tag} onFocusChange={handleChangeFocus} />
-          ))}
-        </div>
-      )}
-    </div>
+      <div className="desk-container">
+        {isNoteFullScreen ? (
+          <NotePreview
+            tag={activeNote}
+            onBackButtonClick={handleGoBackToDesk}
+          />
+        ) : (
+          <div
+            className="desk"
+            id="desk"
+            onDoubleClick={(e) => {
+              if (!(e.target as HTMLElement).closest(".tag")) {
+                const pos = screenToCanvas(e.clientX, e.clientY);
+                handleAddTag.mutate({
+                  pageX: Math.floor(pos.x),
+                  pageY: Math.floor(pos.y),
+                });
+              }
+            }}
+            ref={tagDragRef}
+          >
+            <Stage
+              ref={stageRef}
+              width={2000}
+              height={2000}
+              x={stageState.x}
+              y={stageState.y}
+              scaleX={stageState.scale}
+              scaleY={stageState.scale}
+              onWheel={handleWheel}
+              draggable
+            >
+              <Layer>
+                <Shape
+                  sceneFunc={(ctx, shape) => {
+                    const spacing = 40;
+                    const range = 2000;
+
+                    ctx.fillStyle = "#ccc";
+
+                    for (let x = -range; x <= range; x += spacing) {
+                      for (let y = -range; y <= range; y += spacing) {
+                        ctx.fillRect(x, y, 1, 1);
+                      }
+                    }
+                  }}
+                />
+                {deskTags
+                  ?.filter((tag) => tag.id !== activeNote.id)
+                  .map((tag) => (
+                    <KonvaTag
+                      key={tag.id}
+                      tag={tag}
+                      onFocusChange={handleChangeFocus}
+                      onDragEnd={moveTag}
+                    />
+                  ))}
+              </Layer>
+            </Stage>
+
+            {activeNote.id && (
+              <ActiveTag
+                tag={{
+                  ...activeNote,
+                  ...canvasToScreen(activeNote.x, activeNote.y),
+                }}
+                scale={stageState.scale}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

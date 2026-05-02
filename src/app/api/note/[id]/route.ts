@@ -74,12 +74,12 @@ export async function PATCH(
 
     if (reqBody.x !== undefined) {
       updates.push(`x = $${paramCount++}`);
-      values.push(reqBody.x);
+      values.push(Math.floor(reqBody.x));
     }
 
     if (reqBody.y !== undefined) {
       updates.push(`y = $${paramCount++}`);
-      values.push(reqBody.y);
+      values.push(Math.floor(reqBody.y));
     }
 
     if (updates.length === 0) {

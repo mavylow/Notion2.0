@@ -16,6 +16,7 @@ interface PreviewProps {
   link?: string;
   onDelete: (id: number) => void;
   onClick: (id: number | string, desk?: boolean) => void;
+  onDoubleClick: () => {};
   type: "note" | "desk";
 }
 
@@ -29,6 +30,7 @@ function Preview({
   link,
   onDelete,
   onClick,
+  onDoubleClick,
   type,
 }: PreviewProps) {
   const date = type === "note" ? createdAt : creationDate;
@@ -66,7 +68,12 @@ function Preview({
   };
 
   return (
-    <div className="side-preview-container" id={`${id}`} onClick={handleClick}>
+    <div
+      className="side-preview-container"
+      id={`${id}`}
+      onClick={handleClick}
+      onDoubleClick={onDoubleClick}
+    >
       <section className="side-preview">
         <h1>{formattedTitle(displayTitle)}</h1>
         {formattedDate && (

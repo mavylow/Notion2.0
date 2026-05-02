@@ -11,6 +11,7 @@ import { ITag, IUser } from "@/interfaces";
 import { Socket } from "socket.io-client";
 import { socketActions } from "@/utils/config";
 import { SocketContext } from "@/providers/SocketProvider";
+import { Group, Rect, Text } from "react-konva";
 
 function Tag({
   tag,
@@ -24,7 +25,7 @@ function Tag({
   const { data: activeNote } = useSelector((state: RootState) => state.note);
   const dispatch = useDispatch();
 
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef(null);
 
   const [{ isDragging }, drag] = useDrag(
     () => ({

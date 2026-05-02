@@ -11,7 +11,7 @@
 }
 
 .desk-aside {
-  height: 100%;
+  height: calc(100% - 68px);
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-color) transparent;
@@ -19,13 +19,8 @@
 
 .desk {
   width: 100%;
-  background-image: radial-gradient(
-    circle at center,
-    var(--border-color) 0.1rem,
-    transparent 0
-  );
-  background-size: 1.4rem 1.4rem;
-  background-repeat: round;
+  overflow: hidden;
+  position: relative;
 }
 
 .notification {
@@ -47,4 +42,11 @@
 .desk-aside::-webkit-scrollbar-thumb {
   background: var(--border-color);
   border-radius: 4px;
+}
+.side-container {
+  position: absolute;
+  left: 0;
+  z-index: 1000;
+  background: var(--background-root);
+  height: calc(100% - 106px);
 }
