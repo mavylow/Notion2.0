@@ -15,7 +15,7 @@ interface NoteInputPayload {
 
 export const fetchNote = createAsyncThunk<ITag, number | string>(
   "note/fetchNote",
-  async (id: number | string) => {
+  async (id: number | string, ref) => {
     const note = await getNote(id);
     return note;
   }
@@ -50,6 +50,11 @@ const noteSlicer = createSlice({
     },
     setFullNote(state, action: PayloadAction<NoteState["data"]>) {
       state.data = { ...action.payload };
+      state.loading = false;
+      state.error = null;
+    },
+    setScreenCordNote(state, action: PayloadAction<NoteState["data"]>) {
+      state.data = { ...state.data, ...action.payload };
       state.loading = false;
       state.error = null;
     },
@@ -88,6 +93,7 @@ export const {
   noteInputChange,
   setFullNote,
   setNoteLoading,
+  setScreenCordNote,
 } = noteSlicer.actions;
 
 export default noteSlicer.reducer;

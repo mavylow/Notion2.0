@@ -156,13 +156,17 @@ i18next
           english: "English",
           russian: "Russian",
           italian: "Italian",
-        },
+          createDesk: "Create Desk",
+          deskName: "Desk Name",
+          deskNamePlaceholder: "Enter desk name...",
+          deskLink: "Desk Link (optional)",
+          deskLinkPlaceholder: "Enter desk link...",
 
-        createDesk: "Create Desk",
-        deskName: "Desk Name",
-        deskNamePlaceholder: "Enter desk name...",
-        deskLink: "Desk Link (optional)",
-        deskLinkPlaceholder: "Enter desk link...",
+          desks: "Desks",
+          permission: "Permission",
+          anyoneWithLink: "Anyone with the link",
+          permissionDenied: "Permission denied",
+        },
       },
 
       ru: {
@@ -311,6 +315,10 @@ i18next
           deskNamePlaceholder: "Введите название доски...",
           deskLink: "Ссылка на доску (необязательно)",
           deskLinkPlaceholder: "Введите ссылку на доску...",
+          permission: "Доступ",
+          anyoneWithLink: "Любой по ссылке",
+          permissionDenied: "Доступ запрещен",
+          desks: "Доски",
         },
       },
 
@@ -458,6 +466,11 @@ i18next
           deskLink: "Link della scrivia (opzionale)",
           deskLinkPlaceholder: "Inserisci il link della scrivia...",
         },
+
+        desks: "Desks",
+        permission: "Permesso",
+        anyoneWithLink: "Chiunque abbia il link",
+        permissionDenied: "Permesso negato",
       },
     },
   });

@@ -115,22 +115,6 @@ function CreateDesk({ onAdd }: ICreatePostProps) {
                 message={deskForm.errors.name}
               />
             )}
-            {/* <Textarea
-              id="desk-link"
-              description={t("deskLink")}
-              name="link"
-              placeholder={t("deskLinkPlaceholder")}
-              Icon={EditPenIcon}
-              value={deskForm.values.link || ""}
-              onChange={deskForm.handleChange}
-            />
-            {deskForm.errors.link && (
-              <InputMessage
-                Icon={ErrorWarningIcon}
-                status="error"
-                message={deskForm.errors.link}
-              />
-            )} */}
 
             <Select
               name="public"
@@ -147,11 +131,11 @@ function CreateDesk({ onAdd }: ICreatePostProps) {
               labelId="demo-simple-select-label"
               id="demo-simple-select"
               value={deskForm.values.public}
-              label="Permission"
+              label={t("permission")}
               onChange={deskForm.handleChange}
             >
-              <MenuItem value={"true"}>Anyone with the link</MenuItem>
-              <MenuItem value={"false"}>Permission denied</MenuItem>
+              <MenuItem value={"true"}>{t("anyoneWithLink")}</MenuItem>
+              <MenuItem value={"false"}>{t("permissionDenied")}</MenuItem>
             </Select>
 
             <Button type="submit" description={t("create")} />

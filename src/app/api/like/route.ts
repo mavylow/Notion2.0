@@ -40,7 +40,7 @@ export async function POST(request) {
 
     if (likeResult.rows.length === 0) {
       const queryLike = `
-        INSERT INTO likes ("postId", "userId", "createdDate")
+        INSERT INTO likes ("postId", "userId", "creationDate")
         VALUES ($1, $2, $3)
       `;
 

@@ -198,6 +198,10 @@ export const createDesk = async (newDesk: IDesk) => {
   return desk;
 };
 
+export const deleteDeskById = async (id: number) => {
+  await fetchRESTData(`/api/desks`, "DELETE", JSON.stringify(id));
+};
+
 export const getAllNotes = async (id: ParamValue) => {
   const res = await fetch(`/api/all_notes/${id}`, {
     method: "GET",

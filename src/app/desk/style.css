@@ -50,3 +50,10 @@
   background: var(--background-root);
   height: calc(100% - 106px);
 }
+
+.actions-desk {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+}

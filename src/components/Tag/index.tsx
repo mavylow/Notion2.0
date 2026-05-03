@@ -1,14 +1,7 @@
 "use client";
 
-import Markdown from "react-markdown";
-import { useDispatch, useSelector } from "react-redux";
-import { noteInputChange } from "@slices/noteSlice";
-import { useContext, useEffect, useRef } from "react";
-import { useDrag } from "react-dnd";
-import "@components/Tag/style.css";
-import { RootState } from "@/store";
-import { ITag, IUser } from "@/interfaces";
-import { Socket } from "socket.io-client";
+import { useContext } from "react";
+import { ITag } from "@/interfaces";
 import { socketActions } from "@/utils/config";
 import { SocketContext } from "@/providers/SocketProvider";
 import { Group, Rect, Text } from "react-konva";
@@ -16,80 +9,73 @@ import { Group, Rect, Text } from "react-konva";
 function Tag({
   tag,
   onFocusChange,
+  onDragEnd,
 }: {
   tag: ITag;
   onFocusChange: (id: number) => void;
+  onDragEnd: (id: number, x: number, y: number) => void;
 }) {
   const { title, body, id, x, y, deskId, isActive } = tag;
   const { sendSocketMessage } = useContext(SocketContext);
-  const { data: activeNote } = useSelector((state: RootState) => state.note);
-  const dispatch = useDispatch();
 
-  const ref = useRef(null);
+  const handleDragEnd = (e) => {
+    const newX = e.target.x();
+    const newY = e.target.y();
 
-  const [{ isDragging }, drag] = useDrag(
-    () => ({
-      type: "tag",
-      canDrag: !isActive,
-      item: { id },
-      collect: (monitor) => ({
-        isDragging: !!monitor.isDragging(),
-        canDrag: monitor.canDrag(),
-      }),
-    }),
-    [isActive]
-  );
+    onDragEnd(id, newX, newY);
 
-  const handleChangeInput = (e) => {
-    const { name, value } = e.target;
-    dispatch(noteInputChange({ name, value }));
-    sendSocketMessage(socketActions.CHANGE, { id, name, value, deskId });
+    sendSocketMessage(socketActions.MOVE, {
+      id,
+      x: newX,
+      y: newY,
+      deskId,
+    });
   };
-
-  drag(ref);
   return (
-    <div
-      ref={ref}
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        transform: "translate(-50%, -50%)",
-        opacity: isDragging ? 0.7 : 1,
-        cursor: "move",
-      }}
-      id={id?.toString()}
-      className={`tag ${isActive && "tag-editable"}`}
-      onClick={() => onFocusChange(id)}
-    >
-      {!isActive && (
-        <>
-          <div>
-            <Markdown>{title}</Markdown>
-          </div>
-          <div>
-            <Markdown>{body}</Markdown>
-          </div>
-        </>
-      )}
+    <>
+      <Group
+        x={x}
+        y={y}
+        draggable={!isActive}
+        onDragEnd={handleDragEnd}
+        onClick={(e) => {
+          console.log(e.target);
+          onFocusChange(id);
+        }}
+      >
+        <Rect
+          width={220}
+          height={160}
+          fill={isActive ? "#ffffff" : "#f9f9f9"}
+          cornerRadius={12}
+          shadowBlur={isActive ? 10 : 4}
+          stroke={isActive ? "#333" : undefined}
+          strokeWidth={isActive ? 2 : 0}
+        />
 
-      {isActive && (
-        <>
-          <textarea
-            value={activeNote.title}
-            name="title"
-            id={id?.toString()}
-            onChange={handleChangeInput}
-          ></textarea>
-          <textarea
-            name="body"
-            id={id?.toString()}
-            value={activeNote.body}
-            onChange={handleChangeInput}
-          ></textarea>
-        </>
-      )}
-    </div>
+        <Text
+          text={title}
+          fontSize={16}
+          fontStyle="bold"
+          padding={10}
+          width={220}
+          height={40}
+          wrap="word"
+          fill="#111"
+        />
+
+        <Text
+          text={body}
+          fontSize={14}
+          padding={10}
+          y={40}
+          width={220}
+          height={110}
+          wrap="word"
+          fill="#333"
+        />
+      </Group>
+    </>
   );
 }
 

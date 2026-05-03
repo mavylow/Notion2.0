@@ -10,7 +10,7 @@ interface IProfilePageContext {
 }
 
 export const useProfilePage = create<IProfilePageContext>((set) => ({
-  profilePage: (localStorage.getItem("profile") as TProfilePages) || "info",
+  profilePage: "info",
   changePage: (page: TProfilePages) => {
     localStorage.setItem("profile", page);
     set({ profilePage: page });

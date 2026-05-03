@@ -125,3 +125,94 @@ export async function POST(request) {
     );
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const deskId = await request.json();
+
+    if (!deskId) {
+      return NextResponse.json(
+        { error: "Desk ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const token = (await cookies()).get("session")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication failed" },
+        { status: 401 }
+      );
+    }
+
+    const decoded = jwt.decode(token, SECRET_KEY);
+    const authorId = decoded?.data || decoded?.id;
+
+    if (!authorId) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const checkQuery = `
+      SELECT * FROM desks 
+      WHERE id = $1 AND "authorId" = $2
+    `;
+
+    const checkResult = await pool.query(checkQuery, [deskId, authorId]);
+
+    if (checkResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Desk not found or you don't have permission to delete it" },
+        { status: 403 }
+      );
+    }
+
+    const deleteNotesQuery = `
+    DELETE FROM notes 
+    WHERE "deskId" = $1
+    RETURNING id, title
+  `;
+    const deletedNotes = await pool.query(deleteNotesQuery, [deskId]);
+
+    const deletePermissionsQuery = `
+      DELETE FROM permissions 
+      WHERE "deskId" = $1
+    `;
+    await pool.query(deletePermissionsQuery, [deskId]);
+
+    const deleteDeskQuery = `
+      DELETE FROM desks 
+      WHERE id = $1 AND "authorId" = $2
+      RETURNING id, name
+    `;
+
+    const result = await pool.query(deleteDeskQuery, [deskId, authorId]);
+
+    if (result.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to delete desk" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: "Desk deleted successfully",
+      data: {
+        id: result.rows[0].id,
+        name: result.rows[0].name,
+      },
+    });
+  } catch (e) {
+    console.error("Delete desk error:", e);
+
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation error" }, { status: 400 });
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

@@ -11,8 +11,10 @@ import { type RootState } from "@/store";
 import { useProfilePage } from "@store/profileStore";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 function Header() {
+  const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPageAuth, setIsPageAuth] = useState(true);
@@ -119,7 +121,7 @@ function Header() {
                       Statistics
                     </Link>
                     <Link data-testid="statistics" href={"/desk"}>
-                      Note Desk
+                      Desks
                     </Link>
                   </>
                 ) : (
@@ -139,6 +141,9 @@ function Header() {
                     </Link>
                     <Link href={"/profile"}>
                       {user.firstName} {user.secondName}
+                    </Link>
+                    <Link data-testid="statistics" href={"/desk"}>
+                      {t("desks")}
                     </Link>
                   </>
                 )}

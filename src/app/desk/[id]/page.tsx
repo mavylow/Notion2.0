@@ -1,7 +1,6 @@
 "use client";
 
 import NotePreview from "@/components/NotePreview";
-import Tag from "@/components/Tag";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -12,9 +11,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { ItemTypes, socketActions } from "@utils/config";
+import { socketActions } from "@utils/config";
 import "@app/desk/style.css";
-import { useDrop } from "react-dnd";
 import { ITag, Note } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
@@ -26,8 +24,8 @@ import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
 import Preview from "@/components/Preview";
 import { SocketContext } from "@/providers/SocketProvider";
-import { Stage, Layer, Text, Shape, Group, Rect } from "react-konva";
-import KonvaTag from "@/components/KonvaTag";
+import { Stage, Layer, Shape } from "react-konva";
+import Tag from "@/components/Tag";
 import ActiveTag from "@/components/ActiveTag";
 
 function Desk() {
@@ -42,6 +40,7 @@ function Desk() {
     y: 0,
     scale: 1,
   });
+
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
@@ -57,7 +56,6 @@ function Desk() {
   const [isExpanded, setIsExpanded] = useState(true);
 
   const [isNoteFullScreen, setNoteFullScreen] = useState(null);
-  const tagDragRef = useRef(null);
 
   const activeNoteRef = useRef(activeNote);
   var stageRef = useRef(null);
@@ -97,12 +95,16 @@ function Desk() {
   }, [activeNote]);
 
   useEffect(() => {
-    if (deskId && isConnected) {
+    if (deskId && isConnected && user) {
       sendSocketMessage("join desk", { deskId, username: user.username });
     }
   }, [isConnected, deskId]);
 
   useEffect(() => {
+    if (!isConnected) {
+      return;
+    }
+
     const handleChange = ({ id, name, value, deskId }) => {
       if (id) {
         setTags((prevTags) => {
@@ -117,12 +119,11 @@ function Desk() {
           });
 
           if (activeNoteRef.current?.id === id) {
-            dispatch(
-              setFullNote({
-                ...activeNoteRef.current,
-                [name]: value,
-              })
-            );
+            setTimeout(() => {
+              dispatch(
+                setFullNote({ ...activeNoteRef.current, [name]: value })
+              );
+            }, 0);
           }
 
           return newTags;
@@ -131,7 +132,6 @@ function Desk() {
     };
 
     const handleAdd = (data) => {
-      console.log("1");
       setTags((prev) => [...prev, { ...data, isActive: false }]);
     };
 
@@ -164,7 +164,7 @@ function Desk() {
       socket.off(socketActions.MOVE, handleMove);
       socket.off("joined", handleJoined);
     };
-  }, [dispatch, deskId, socket]);
+  }, [deskId, socket]);
 
   const handleAddTag = useMutation({
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
@@ -216,6 +216,10 @@ function Desk() {
       const result = await res.json();
       setDeskId(result.data.deskId);
       return result.data.notes;
+    },
+    throwOnError: (error) => {
+      console.error(error);
+      return true;
     },
   });
 
@@ -338,6 +342,7 @@ function Desk() {
     setTags((prevTags) =>
       prevTags.map((tag) => ({
         ...tag,
+
         isActive: tag.id === id,
       }))
     );
@@ -368,24 +373,6 @@ function Desk() {
     setTags((prevTags) => prevTags.map((tag) => ({ ...tag, isActive: false })));
   };
 
-  const [{ isOver }, drop] = useDrop(
-    () => ({
-      accept: ItemTypes.TAG,
-      drop: (item: ITag, monitor) => {
-        const clientOffset = monitor.getClientOffset();
-        if (!clientOffset) return;
-
-        const pos = screenToCanvas(clientOffset.x, clientOffset.y);
-        moveTag(item.id, pos.x, pos.y);
-        console.log("move", pos.x, pos.y);
-      },
-      collect: (monitor) => ({
-        isOver: !!monitor.isOver(),
-      }),
-    }),
-    [deskId, isConnected]
-  );
-
   const moveTag = (id: number, left: number, top: number, isWheel = false) => {
     setTags((prevTags) =>
       prevTags.map((tag) => (tag.id === id ? { ...tag, x: left, y: top } : tag))
@@ -396,8 +383,6 @@ function Desk() {
 
     sendSocketMessage(socketActions.MOVE, { id, x: left, y: top, deskId });
   };
-
-  drop(tagDragRef);
 
   const handleExpand = () => {
     setIsExpanded((prev) => !prev);
@@ -420,12 +405,16 @@ function Desk() {
         prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
       );
     } else {
-      console.log(isNoteFullScreen);
-      setNoteFullScreen((prev) => !prev);
-      if (activeNote.id !== id) {
-        await dispatch(fetchNote(id));
-      }
+      // setNoteFullScreen((prev) => !prev);
+      // if (activeNote.id !== id) {
+      //   await dispatch(fetchNote(id));
+      // }
 
+      setLastClickTime(0);
+      handleSetDesk.mutate({ id, desk });
+      setTags((prev) =>
+        prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
+      );
       setLastClickTime(now);
     }
   };
@@ -447,26 +436,24 @@ function Desk() {
     return transform.point({ x, y });
   }, []);
 
-  const canvasToScreen = (canvasX, canvasY) => {
-    const stage = stageRef.current;
-    const transform = stage.getAbsoluteTransform();
-    return transform.point({ x: canvasX, y: canvasY });
-  };
-
   return (
     <>
       <div className="side-container">
-        <Button
-          type="button"
-          onButtonClick={handleExpand}
-          Icon={HamburgerMenuIcon}
-        ></Button>
+        <div className="actions-desk">
+          <Button
+            type="button"
+            onButtonClick={handleExpand}
+            Icon={HamburgerMenuIcon}
+          ></Button>
 
-        <Button
-          type="button"
-          onButtonClick={backToDesks}
-          Icon={ArrowLeftIcon}
-        ></Button>
+          {isExpanded && (
+            <Button
+              type="button"
+              onButtonClick={backToDesks}
+              Icon={ArrowLeftIcon}
+            ></Button>
+          )}
+        </div>
 
         {isExpanded && (
           <aside className="desk-aside">
@@ -513,7 +500,6 @@ function Desk() {
                 });
               }
             }}
-            ref={tagDragRef}
           >
             <Stage
               ref={stageRef}
@@ -544,7 +530,7 @@ function Desk() {
                 {deskTags
                   ?.filter((tag) => tag.id !== activeNote.id)
                   .map((tag) => (
-                    <KonvaTag
+                    <Tag
                       key={tag.id}
                       tag={tag}
                       onFocusChange={handleChangeFocus}
@@ -554,13 +540,13 @@ function Desk() {
               </Layer>
             </Stage>
 
-            {activeNote.id && (
+            {activeNote?.id && !isNoteFullScreen && (
               <ActiveTag
                 tag={{
                   ...activeNote,
-                  ...canvasToScreen(activeNote.x, activeNote.y),
                 }}
                 scale={stageState.scale}
+                stageRef={stageRef}
               />
             )}
           </div>

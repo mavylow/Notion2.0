@@ -3,13 +3,22 @@
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { noteInputChange } from "@slices/noteSlice";
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef } from "react";
 import { SocketContext } from "@/providers/SocketProvider";
 import { socketActions } from "@/utils/config";
 import { ITag } from "@/interfaces";
 import "./style.css";
+import React from "react";
 
-function ActiveTag({ tag, scale }: { tag: ITag; scale: number }) {
+function ActiveTag({
+  tag,
+  scale,
+  stageRef,
+}: {
+  tag: ITag;
+  scale: number;
+  stageRef: any;
+}) {
   const dispatch = useDispatch();
   const { sendSocketMessage } = useContext(SocketContext);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -31,14 +40,27 @@ function ActiveTag({ tag, scale }: { tag: ITag; scale: number }) {
     }
   }, []);
 
+  function canvasToScreen(canvasX: number, canvasY: number) {
+    const stage = stageRef.current;
+    const transform = stage.getAbsoluteTransform();
+    return transform.point({ x: canvasX, y: canvasY });
+  }
+
+  const { x, y } = useMemo(() => {
+    if (!stageRef.current) return { x: tag.x, y: tag.y };
+
+    const transform = stageRef.current.getAbsoluteTransform().copy();
+    return transform.point({ x: tag.x, y: tag.y });
+  }, [tag.x, tag.y, scale]);
+
   if (!tag || !tag.id) return null;
 
   return (
     <div
       style={{
         position: "absolute",
-        left: tag.x,
-        top: tag.y,
+        left: x,
+        top: y,
         width: "220px",
         height: "160px",
         transform: `scale(${scale})`,
@@ -64,4 +86,4 @@ function ActiveTag({ tag, scale }: { tag: ITag; scale: number }) {
   );
 }
 
-export default ActiveTag;
+export default React.memo(ActiveTag);

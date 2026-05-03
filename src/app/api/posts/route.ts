@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   const PostSchema = z.object({
     title: z.string().max(20).nonempty(),
     content: z.string().max(200).nullable(),
-    image: z.string(),
+    image: z.string().nullable(),
   });
 
   try {
