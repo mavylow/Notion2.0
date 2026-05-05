@@ -1,0 +1,21 @@
+.tag-container {
+  border-radius: 12px;
+  padding: 10px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  color: var(--text-color);
+  background-color: var(--background-main);
+}
+
+.tag-title {
+  margin-bottom: 8px;
+}
+
+.tag-body {
+  word-wrap: break-word;
+  word-break: break-word;
+  white-space: normal;
+  overflow: hidden;
+}

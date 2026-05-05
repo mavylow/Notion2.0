@@ -75,7 +75,9 @@ function Preview({
       onDoubleClick={onDoubleClick}
     >
       <section className="side-preview">
-        <h1>{formattedTitle(displayTitle)}</h1>
+        <h1>
+          <Markdown>{formattedTitle(displayTitle)}</Markdown>
+        </h1>
         {formattedDate && (
           <time className="time" dateTime={date}>
             {formattedDate}

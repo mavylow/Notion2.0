@@ -118,6 +118,8 @@ export interface INote {
   desk: boolean;
   x: number;
   y: number;
+  height?: number;
+  width?: number;
   deskId: number;
   createdAt: string;
 }

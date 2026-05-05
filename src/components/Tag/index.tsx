@@ -7,6 +7,7 @@ import { SocketContext } from "@/providers/SocketProvider";
 import { Group, Rect, Text } from "react-konva";
 import Markdown from "react-markdown";
 import { Html } from "react-konva-utils";
+import "@components/Tag/style.css";
 
 function Tag({
   tag,
@@ -17,7 +18,17 @@ function Tag({
   onFocusChange: (id: number) => void;
   onDragEnd: (id: number, x: number, y: number) => void;
 }) {
-  const { title, body, id, x, y, deskId, isActive } = tag;
+  const {
+    title,
+    body,
+    id,
+    x,
+    y,
+    deskId,
+    isActive,
+    height = 160,
+    width = 220,
+  } = tag;
   const { sendSocketMessage } = useContext(SocketContext);
 
   const handleDragEnd = (e) => {
@@ -47,9 +58,9 @@ function Tag({
         }}
       >
         <Rect
-          width={220}
-          height={160}
-          fill={isActive ? "#ffffff" : "#f9f9f9"}
+          width={width || 220}
+          height={height || 160}
+          fill={"none"}
           cornerRadius={12}
           shadowBlur={isActive ? 10 : 4}
           stroke={isActive ? "#333" : undefined}
@@ -65,29 +76,11 @@ function Tag({
             },
           }}
         >
-          <div
-            style={{
-              backgroundColor: isActive ? "#ffffff" : "#f9f9f9",
-              borderRadius: "12px",
-              padding: "10px",
-              maxHeight: "160px",
-              overflowY: "auto",
-              wordWrap: "break-word",
-              wordBreak: "break-word",
-              whiteSpace: "normal",
-            }}
-          >
-            <div style={{ marginBottom: "8px", fontWeight: "bold" }}>
+          <div className="tag-container">
+            <div className="tag-title">
               <Markdown>{title}</Markdown>
             </div>
-            <div
-              style={{
-                wordWrap: "break-word",
-                wordBreak: "break-word",
-                whiteSpace: "normal",
-                overflow: "hidden",
-              }}
-            >
+            <div className="tag-body">
               <Markdown>{body}</Markdown>
             </div>
           </div>
