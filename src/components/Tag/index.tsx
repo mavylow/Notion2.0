@@ -5,6 +5,8 @@ import { ITag } from "@/interfaces";
 import { socketActions } from "@/utils/config";
 import { SocketContext } from "@/providers/SocketProvider";
 import { Group, Rect, Text } from "react-konva";
+import Markdown from "react-markdown";
+import { Html } from "react-konva-utils";
 
 function Tag({
   tag,
@@ -31,6 +33,7 @@ function Tag({
       deskId,
     });
   };
+
   return (
     <>
       <Group
@@ -53,27 +56,42 @@ function Tag({
           strokeWidth={isActive ? 2 : 0}
         />
 
-        <Text
-          text={title}
-          fontSize={16}
-          fontStyle="bold"
-          padding={10}
-          width={220}
-          height={40}
-          wrap="word"
-          fill="#111"
-        />
-
-        <Text
-          text={body}
-          fontSize={14}
-          padding={10}
-          y={40}
-          width={220}
-          height={110}
-          wrap="word"
-          fill="#333"
-        />
+        <Html
+          divProps={{
+            style: {
+              position: "absolute",
+              width: "220px",
+              pointerEvents: "none",
+            },
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: isActive ? "#ffffff" : "#f9f9f9",
+              borderRadius: "12px",
+              padding: "10px",
+              maxHeight: "160px",
+              overflowY: "auto",
+              wordWrap: "break-word",
+              wordBreak: "break-word",
+              whiteSpace: "normal",
+            }}
+          >
+            <div style={{ marginBottom: "8px", fontWeight: "bold" }}>
+              <Markdown>{title}</Markdown>
+            </div>
+            <div
+              style={{
+                wordWrap: "break-word",
+                wordBreak: "break-word",
+                whiteSpace: "normal",
+                overflow: "hidden",
+              }}
+            >
+              <Markdown>{body}</Markdown>
+            </div>
+          </div>
+        </Html>
       </Group>
     </>
   );
