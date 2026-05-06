@@ -10,7 +10,7 @@ import "./style.css";
 import React from "react";
 import TextareaAutosize from "@mui/material/TextareaAutosize";
 import { Html } from "react-konva-utils";
-import { Group } from "react-konva";
+import { Group, Rect } from "react-konva";
 
 function ActiveTag({ tag }: { tag: ITag }) {
   const dispatch = useDispatch();
@@ -35,15 +35,26 @@ function ActiveTag({ tag }: { tag: ITag }) {
     }
   }, []);
 
+  const safeHeight = Math.max(Number(tag.height) || 160, 100);
+  const safeWidth = Math.max(Number(tag.width) || 220, 100);
+  const safeX = Number(tag.x) || 0;
+  const safeY = Number(tag.y) || 0;
+
   if (!tag || !tag.id) return null;
 
   return (
-    <Group x={tag.x} y={tag.y} height={tag.height} width={tag.width}>
+    <Group x={safeX} y={safeY}>
+      <Rect
+        height={safeHeight}
+        width={safeWidth}
+        fill="transparent"
+        listening={false}
+      />
       <Html>
         <div
           id={tag.id?.toString()}
           className="tag-editable"
-          style={{ height: `${tag.height}px`, width: `${tag.width}px` }}
+          style={{ height: `${safeHeight}px`, width: `${safeWidth}px` }}
         >
           <TextareaAutosize
             ref={textareaRef}

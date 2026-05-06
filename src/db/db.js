@@ -1,22 +1,37 @@
-import { Pool } from "pg";
-import dotenv from "dotenv";
+import pkg from "pg";
+const { Pool } = pkg;
 
-dotenv.config();
+const isProduction = !!process.env.DATABASE_URL;
 
-const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
-});
+const pool = new Pool(
+  isProduction
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false,
+        },
+      }
+    : {
+        user: process.env.DB_USER || "postgres",
+        host: process.env.DB_HOST || "localhost",
+        database: process.env.DB_NAME || "NotionObsidian",
+        password: process.env.DB_PASSWORD || "qwerty",
+        port: process.env.DB_PORT || 5432,
+      }
+);
 
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error("Error connecting to database:", err.stack);
-  } else {
-    release();
-  }
+pool
+  .connect()
+  .then((client) => {
+    console.log("✅ Connected to PostgreSQL");
+    client.release();
+  })
+  .catch((err) => {
+    console.error("❌ Database connection error:", err.stack);
+  });
+
+pool.on("error", (err) => {
+  console.error("❌ Unexpected DB error:", err);
 });
 
 export default pool;

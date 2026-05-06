@@ -30,12 +30,13 @@ import ActiveTag from "@/components/ActiveTag";
 
 function Desk() {
   const { id } = useParams();
-
   const { user } = useContext(AuthContext);
   const { socket, isConnected, sendSocketMessage } = useContext(SocketContext);
 
   const [deskId, setDeskId] = useState(null);
   const [tags, setTags] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+  const [stageSize, setStageSize] = useState({ width: 2000, height: 2000 });
 
   const [stageState, setStageState] = useState({
     x: 0,
@@ -55,30 +56,51 @@ function Desk() {
   }, [tags]);
 
   const [lastClickTime, setLastClickTime] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(!isMobile);
   const [isNoteFullScreen, setNoteFullScreen] = useState(null);
 
   const activeNoteRef = useRef(activeNote);
+  const stageRef = useRef(null);
+  const deskContainerRef = useRef(null);
 
-  var stageRef = useRef(null);
+  const scaleBy = 1.05;
 
-  var scaleBy = 1.05;
+  // Detect mobile and resize
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      setIsExpanded(!mobile);
 
-  var handleWheel = function (e) {
+      if (deskContainerRef.current) {
+        setStageSize({
+          width: deskContainerRef.current.clientWidth,
+          height: deskContainerRef.current.clientHeight,
+        });
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const handleWheel = useCallback((e) => {
     e.evt.preventDefault();
-    var stage = stageRef.current;
-    var oldScale = stage.scaleX();
-    var pointer = stage.getPointerPosition();
-    var mousePointTo = {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = {
       x: (pointer.x - stage.x()) / oldScale,
       y: (pointer.y - stage.y()) / oldScale,
     };
-    var direction = e.evt.deltaY > 0 ? -1 : 1;
-    if (e.evt.ctrlKey) {
-      direction = -direction;
-    }
-    var newScale = direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-    newScale = Math.max(0.1, Math.min(10, newScale));
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = Math.max(
+      0.1,
+      Math.min(10, direction > 0 ? oldScale * scaleBy : oldScale / scaleBy)
+    );
 
     stage.scale({ x: newScale, y: newScale });
     stage.position({
@@ -90,7 +112,7 @@ function Desk() {
       y: stage.y(),
       scale: stage.scaleX(),
     });
-  };
+  }, []);
 
   useEffect(() => {
     activeNoteRef.current = activeNote;
@@ -100,22 +122,17 @@ function Desk() {
     if (deskId && isConnected && user) {
       sendSocketMessage("join desk", { deskId, username: user.username });
     }
-  }, [isConnected, deskId]);
+  }, [isConnected, deskId, user, sendSocketMessage]);
 
   useEffect(() => {
-    if (!isConnected) {
-      return;
-    }
+    if (!isConnected) return;
 
-    const handleChange = ({ id, name, value, deskId }) => {
+    const handleChange = ({ id, name, value }) => {
       if (id) {
         setTags((prevTags) => {
           const newTags = prevTags.map((tag) => {
             if (tag.id === id) {
-              return {
-                ...tag,
-                [name]: value,
-              };
+              return { ...tag, [name]: value };
             }
             return tag;
           });
@@ -137,26 +154,36 @@ function Desk() {
       setTags((prev) => [...prev, { ...data, isActive: false }]);
     };
 
-    const handleDelete = ({ id, _ }) => {
+    const handleDelete = ({ id }) => {
       setTags((prev) => prev.filter((tag) => tag.id !== id));
     };
 
-    const handleResize = ({ id, height, width, _ }) => {
+    const handleResize = ({ id, height, width }) => {
       setTags((prevTags) => {
         const newTags = prevTags.map((tag) => {
           if (tag.id === id) {
+            const safeHeight = Math.max(Number(height) || 160, 100);
+            const safeWidth = Math.max(Number(width) || 220, 100);
             return {
               ...tag,
-              height,
-              width,
+              height: safeHeight,
+              width: safeWidth,
             };
           }
           return tag;
         });
 
         if (activeNoteRef.current?.id === id) {
+          const safeHeight = Math.max(Number(height) || 160, 100);
+          const safeWidth = Math.max(Number(width) || 220, 100);
           setTimeout(() => {
-            dispatch(setFullNote({ ...activeNoteRef.current, height, width }));
+            dispatch(
+              setFullNote({
+                ...activeNoteRef.current,
+                height: safeHeight,
+                width: safeWidth,
+              })
+            );
           }, 0);
         }
 
@@ -191,7 +218,7 @@ function Desk() {
       socket.off(socketActions.MOVE, handleMove);
       socket.off("joined", handleJoined);
     };
-  }, [deskId, socket]);
+  }, [isConnected, socket, dispatch]);
 
   const handleAddTag = useMutation({
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
@@ -201,8 +228,8 @@ function Desk() {
         desk: true,
         x: pageX,
         y: pageY,
-        height: 160,
-        width: 220,
+        height: isMobile ? 200 : 160,
+        width: isMobile ? window.innerWidth - 40 : 220,
         deskId: deskId,
         createdAt: Date.now(),
       };
@@ -218,7 +245,6 @@ function Desk() {
       const result = await res.json();
       return result.data;
     },
-
     onSuccess: (data) => {
       sendSocketMessage(socketActions.ADD, data);
     },
@@ -257,7 +283,7 @@ function Desk() {
       const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
       setTags(allTags || []);
     }
-  }, [isNotesLoading]);
+  }, [isNotesLoading, notes]);
 
   const handleSetDesk = useMutation({
     mutationFn: async ({
@@ -277,8 +303,7 @@ function Desk() {
 
       return res.json();
     },
-
-    onSuccess: (data) => {
+    onSuccess: () => {
       refetchNotes();
     },
   });
@@ -333,7 +358,6 @@ function Desk() {
       const result = await res.json();
       return result.data;
     },
-
     onSuccess: (data) => {
       setTags((prev) =>
         prev.map((tag) =>
@@ -341,28 +365,21 @@ function Desk() {
         )
       );
     },
-
-    onError: (error) => {
-      console.error("Failed to update tag:", error);
-    },
   });
 
   const handleDeleteNote = useMutation({
     mutationFn: async (id: number) => {
       await deleteNote(id);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       const deletedId = variables;
-
       sendSocketMessage(socketActions.DELETE, { id: deletedId, deskId });
       setTags((prev) => prev.filter((tag) => tag.id !== deletedId));
     },
   });
 
   const handleChangeFocus = async (id: number) => {
-    if (activeNote?.id === id) {
-      return;
-    }
+    if (activeNote?.id === id) return;
 
     if (activeNote?.id && !noteLoading) {
       await handleEditTag.mutateAsync({
@@ -377,34 +394,40 @@ function Desk() {
     setTags((prevTags) =>
       prevTags.map((tag) => ({
         ...tag,
-
         isActive: tag.id === id,
       }))
     );
+
+    if (isMobile) {
+      setIsExpanded(false);
+    }
   };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".tag-editable")) {
         if (activeNote?.id && !noteLoading) {
-          const { height, width } = document
-            .getElementsByClassName("tag-editable")[0]
-            .getBoundingClientRect();
+          const editableElement = document.querySelector(
+            ".tag-editable"
+          ) as HTMLElement;
+          if (editableElement) {
+            const { height, width } = editableElement.getBoundingClientRect();
 
-          sendSocketMessage(socketActions.RESIZE, {
-            id: activeNote.id,
-            height,
-            width,
-            deskId,
-          });
+            sendSocketMessage(socketActions.RESIZE, {
+              id: activeNote.id,
+              height: Math.round(height),
+              width: Math.round(width),
+              deskId,
+            });
 
-          handleEditTag.mutate({
-            id: activeNote.id,
-            title: activeNote.title,
-            body: activeNote.body,
-            height,
-            width,
-          });
+            handleEditTag.mutate({
+              id: activeNote.id,
+              title: activeNote.title,
+              body: activeNote.body,
+              height: Math.round(height),
+              width: Math.round(width),
+            });
+          }
         }
         dispatch(resetNote());
         resetActiveTags();
@@ -415,32 +438,24 @@ function Desk() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [activeNote, noteLoading]);
+  }, [activeNote, noteLoading, deskId, sendSocketMessage, dispatch]);
 
   const resetActiveTags = () => {
     setTags((prevTags) => prevTags.map((tag) => ({ ...tag, isActive: false })));
   };
 
-  const moveTag = (id: number, left: number, top: number, isWheel = false) => {
+  const moveTag = (id: number, left: number, top: number) => {
     setTags((prevTags) =>
       prevTags.map((tag) => (tag.id === id ? { ...tag, x: left, y: top } : tag))
     );
-    if (!isWheel) {
-      handleEditTag.mutate({ id, x: left, y: top });
-    }
 
+    handleEditTag.mutate({ id, x: left, y: top });
     sendSocketMessage(socketActions.MOVE, { id, x: left, y: top, deskId });
   };
 
   const handleExpand = () => {
     setIsExpanded((prev) => !prev);
   };
-
-  useEffect(() => {
-    if (!activeNote.id && noteLoading) {
-      handleGoBackToDesk();
-    }
-  }, [activeNote.id, noteLoading]);
 
   const handleNotePreviewClick = async (id: number | string, desk: boolean) => {
     const now = Date.now();
@@ -453,17 +468,11 @@ function Desk() {
         prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
       );
     } else {
-      // setNoteFullScreen((prev) => !prev);
-      // if (activeNote.id !== id) {
-      //   await dispatch(fetchNote(id));
-      // }
-
-      setLastClickTime(0);
+      setLastClickTime(now);
       handleSetDesk.mutate({ id, desk });
       setTags((prev) =>
         prev.map((tag) => (tag.id === id ? { ...tag, desk: !tag.desk } : tag))
       );
-      setLastClickTime(now);
     }
   };
 
@@ -492,21 +501,21 @@ function Desk() {
             type="button"
             onButtonClick={handleExpand}
             Icon={HamburgerMenuIcon}
-          ></Button>
+          />
 
           {isExpanded && (
             <Button
               type="button"
               onButtonClick={backToDesks}
               Icon={ArrowLeftIcon}
-            ></Button>
+            />
           )}
         </div>
 
         {isExpanded && (
           <aside className="desk-aside">
             {isNotesLoading ? (
-              <div>Loading...</div>
+              <div className="loading-state">Loading...</div>
             ) : (
               <>
                 {tags?.length > 0 ? (
@@ -522,14 +531,14 @@ function Desk() {
                     />
                   ))
                 ) : (
-                  <div>Заметки не найдены</div>
+                  <div className="empty-state">Заметки не найдены</div>
                 )}
               </>
             )}
           </aside>
         )}
       </div>
-      <div className="desk-container">
+      <div className="desk-container" ref={deskContainerRef}>
         {isNoteFullScreen ? (
           <NotePreview
             tag={activeNote}
@@ -551,8 +560,8 @@ function Desk() {
           >
             <Stage
               ref={stageRef}
-              width={2000}
-              height={2000}
+              width={stageSize.width}
+              height={stageSize.height}
               x={stageState.x}
               y={stageState.y}
               scaleX={stageState.scale}
@@ -564,7 +573,7 @@ function Desk() {
                 <Shape
                   sceneFunc={(ctx) => {
                     const spacing = 40;
-                    const range = 2000;
+                    const range = 5000;
 
                     const borderColor = getComputedStyle(
                       document.documentElement
@@ -593,16 +602,6 @@ function Desk() {
                     />
                   )
                 )}
-                {/* {deskTags
-                  .filter((tag) => tag.id !== activeNote?.id)
-                  .map((tag) => (
-                    <Tag
-                      key={tag.id}
-                      tag={tag}
-                      onFocusChange={handleChangeFocus}
-                      onDragEnd={moveTag}
-                    />
-                  ))} */}
               </Layer>
             </Stage>
           </div>

@@ -87,7 +87,7 @@ app.prepare().then(() => {
       if (roomStates.has(deskId)) {
         const noteIndex = roomStates
           .get(deskId)
-          .notes.findIndex((n) => n.id === note.id);
+          .notes.findIndex((n) => n.id === id);
         if (noteIndex !== -1) {
           roomStates.get(deskId).notes[noteIndex] = { ...note };
         }
