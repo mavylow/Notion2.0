@@ -3,7 +3,7 @@
 import NotePreview from "@/components/NotePreview";
 import { AuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
+import React, {
   useCallback,
   useContext,
   useEffect,
@@ -30,8 +30,10 @@ import ActiveTag from "@/components/ActiveTag";
 
 function Desk() {
   const { id } = useParams();
+
   const { user } = useContext(AuthContext);
   const { socket, isConnected, sendSocketMessage } = useContext(SocketContext);
+
   const [deskId, setDeskId] = useState(null);
   const [tags, setTags] = useState([]);
 
@@ -54,10 +56,10 @@ function Desk() {
 
   const [lastClickTime, setLastClickTime] = useState(0);
   const [isExpanded, setIsExpanded] = useState(true);
-
   const [isNoteFullScreen, setNoteFullScreen] = useState(null);
 
   const activeNoteRef = useRef(activeNote);
+
   var stageRef = useRef(null);
 
   var scaleBy = 1.05;
@@ -139,6 +141,29 @@ function Desk() {
       setTags((prev) => prev.filter((tag) => tag.id !== id));
     };
 
+    const handleResize = ({ id, height, width, _ }) => {
+      setTags((prevTags) => {
+        const newTags = prevTags.map((tag) => {
+          if (tag.id === id) {
+            return {
+              ...tag,
+              height,
+              width,
+            };
+          }
+          return tag;
+        });
+
+        if (activeNoteRef.current?.id === id) {
+          setTimeout(() => {
+            dispatch(setFullNote({ ...activeNoteRef.current, height, width }));
+          }, 0);
+        }
+
+        return newTags;
+      });
+    };
+
     const handleMove = (data) => {
       setTags((prev) =>
         prev.map((tag) =>
@@ -152,6 +177,7 @@ function Desk() {
     };
 
     socket.on(socketActions.CHANGE, handleChange);
+    socket.on(socketActions.RESIZE, handleResize);
     socket.on(socketActions.ADD, handleAdd);
     socket.on(socketActions.DELETE, handleDelete);
     socket.on(socketActions.MOVE, handleMove);
@@ -159,6 +185,7 @@ function Desk() {
 
     return () => {
       socket.off(socketActions.CHANGE, handleChange);
+      socket.off(socketActions.RESIZE, handleResize);
       socket.off(socketActions.ADD, handleAdd);
       socket.off(socketActions.DELETE, handleDelete);
       socket.off(socketActions.MOVE, handleMove);
@@ -174,6 +201,8 @@ function Desk() {
         desk: true,
         x: pageX,
         y: pageY,
+        height: 160,
+        width: 220,
         deskId: deskId,
         createdAt: Date.now(),
       };
@@ -262,6 +291,8 @@ function Desk() {
       title,
       body,
       desk,
+      height,
+      width,
     }: {
       id: number;
       title?: string;
@@ -269,6 +300,8 @@ function Desk() {
       desk?: boolean;
       x?: number;
       y?: number;
+      height?: number;
+      width?: number;
     }) => {
       const updateData: any = {};
 
@@ -277,6 +310,8 @@ function Desk() {
       if (title !== undefined) updateData.title = title;
       if (body !== undefined) updateData.body = body;
       if (desk !== undefined) updateData.desk = desk;
+      if (height !== undefined) updateData.height = height;
+      if (width !== undefined) updateData.width = width;
 
       if (Object.keys(updateData).length === 0) {
         const currentTag = tags.find((tag) => tag.id === id);
@@ -352,10 +387,23 @@ function Desk() {
     const handleClickOutside = (e: MouseEvent) => {
       if (!(e.target as HTMLElement).closest(".tag-editable")) {
         if (activeNote?.id && !noteLoading) {
+          const { height, width } = document
+            .getElementsByClassName("tag-editable")[0]
+            .getBoundingClientRect();
+
+          sendSocketMessage(socketActions.RESIZE, {
+            id: activeNote.id,
+            height,
+            width,
+            deskId,
+          });
+
           handleEditTag.mutate({
             id: activeNote.id,
             title: activeNote.title,
             body: activeNote.body,
+            height,
+            width,
           });
         }
         dispatch(resetNote());
@@ -514,11 +562,17 @@ function Desk() {
             >
               <Layer>
                 <Shape
-                  sceneFunc={(ctx, shape) => {
+                  sceneFunc={(ctx) => {
                     const spacing = 40;
                     const range = 2000;
 
-                    ctx.fillStyle = "#ccc";
+                    const borderColor = getComputedStyle(
+                      document.documentElement
+                    )
+                      .getPropertyValue("--text-color")
+                      .trim();
+
+                    ctx.fillStyle = borderColor;
 
                     for (let x = -range; x <= range; x += spacing) {
                       for (let y = -range; y <= range; y += spacing) {
@@ -527,8 +581,20 @@ function Desk() {
                     }
                   }}
                 />
-                {deskTags
-                  ?.filter((tag) => tag.id !== activeNote.id)
+                {deskTags.map((tag) =>
+                  tag.id === activeNote.id ? (
+                    <ActiveTag key={tag.id} tag={activeNote} />
+                  ) : (
+                    <Tag
+                      key={tag.id}
+                      tag={tag}
+                      onFocusChange={handleChangeFocus}
+                      onDragEnd={moveTag}
+                    />
+                  )
+                )}
+                {/* {deskTags
+                  .filter((tag) => tag.id !== activeNote?.id)
                   .map((tag) => (
                     <Tag
                       key={tag.id}
@@ -536,19 +602,9 @@ function Desk() {
                       onFocusChange={handleChangeFocus}
                       onDragEnd={moveTag}
                     />
-                  ))}
+                  ))} */}
               </Layer>
             </Stage>
-
-            {activeNote?.id && !isNoteFullScreen && (
-              <ActiveTag
-                tag={{
-                  ...activeNote,
-                }}
-                scale={stageState.scale}
-                stageRef={stageRef}
-              />
-            )}
           </div>
         )}
       </div>

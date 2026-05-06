@@ -117,6 +117,8 @@ export interface INote {
   body: string;
   desk: boolean;
   x: number;
+  height?: number;
+  width?: number;
   y: number;
   height?: number;
   width?: number;

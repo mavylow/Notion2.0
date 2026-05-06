@@ -8,4 +8,5 @@ export const socketActions = {
   DELETE: "delete_note",
   MOVE: "move_note",
   YJS: "yjs_note",
+  RESIZE: "resize_note",
 };

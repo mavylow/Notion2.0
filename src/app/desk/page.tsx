@@ -94,24 +94,7 @@ function DeskList() {
 
         {isExpanded && (
           <aside className="desk-aside">
-            {/* {desks?.length > 0 ? (
-              desks?.map((desk) => {
-                console.log(desk);
-                return (
-                  <Preview
-                    key={desk.id}
-                    {...desk}
-                    onDelete={(id) => handleDeleteDesk(id)}
-                    onClick={(link) => router.push(`desk/${link}`)}
-                    type="desk"
-                  />
-                );
-              })
-            ) : (
-              <div>{t("Desks not found")}</div>
-            )} */}
             {desks?.map((desk) => {
-              console.log(desk);
               return (
                 <Preview
                   key={desk.id}

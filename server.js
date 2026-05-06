@@ -96,6 +96,23 @@ app.prepare().then(() => {
       io.to(`${deskId}`).emit("move_note", { id, x, y, deskId });
     });
 
+    socket.on("resize_note", ({ id, height, width, deskId }) => {
+      console.log(
+        `📍 Note resized: ${id} to (${height}, ${width}) in desk ${deskId}`
+      );
+
+      if (roomStates.has(deskId)) {
+        const noteIndex = roomStates
+          .get(deskId)
+          .notes.findIndex((n) => n.id === note.id);
+        if (noteIndex !== -1) {
+          roomStates.get(deskId).notes[noteIndex] = { ...note };
+        }
+      }
+
+      io.to(`${deskId}`).emit("resize_note", { id, height, width, deskId });
+    });
+
     socket.on("disconnect", () => {
       console.log(`❌ User disconnected: ${socket.id}`);
     });

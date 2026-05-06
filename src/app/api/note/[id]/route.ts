@@ -45,7 +45,7 @@ export async function PATCH(
       );
     }
 
-    const currentNote = note.rows[0];
+    console.log(reqBody);
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -80,6 +80,16 @@ export async function PATCH(
     if (reqBody.y !== undefined) {
       updates.push(`y = $${paramCount++}`);
       values.push(Math.floor(reqBody.y));
+    }
+
+    if (reqBody.height !== undefined) {
+      updates.push(`height = $${paramCount++}`);
+      values.push(Math.floor(reqBody.height));
+    }
+
+    if (reqBody.width !== undefined) {
+      updates.push(`width = $${paramCount++}`);
+      values.push(Math.floor(reqBody.width));
     }
 
     if (updates.length === 0) {

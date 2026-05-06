@@ -3,12 +3,15 @@
   display: flex;
   flex-direction: column;
   background: var(--background-main);
+  color: var(--text-color);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   cursor: pointer;
   resize: both;
   overflow: auto;
   z-index: 10;
+  width: 220px;
+  height: 160px;
 }
 
 .tag-editable:hover {
@@ -17,7 +20,6 @@
 }
 
 .tag-editable {
-  background: #ffffff;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 0 0 2px #333;
   z-index: 20;
   cursor: default;
@@ -27,41 +29,22 @@
 .tag::-webkit-resizer {
   border-width: 8px;
   border-style: solid;
-  border-color: transparent #999 #999 transparent;
+  border-color: transparent var(--border-color) var(--border-color) transparent;
   border-radius: 0 0 12px 0;
-}
-
-.tag .tag-title {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--text-color);
-  padding: 0.75rem 0.75rem 0.25rem 0.75rem;
-  margin: 0;
-  word-break: break-word;
-  line-height: 1.4;
-}
-
-.tag .tag-body {
-  font-size: 0.875rem;
-  color: var(--text-color);
-  padding: 0 0.75rem 0.75rem 0.75rem;
-  margin: 0;
-  line-height: 1.5;
-  flex: 1;
-  word-break: break-word;
-  overflow-y: auto;
 }
 
 .tag-editable textarea {
   font-family: inherit;
   font-size: 0.875rem;
-  background: white;
-  border: 1px solid var(--border-color);
+  background: var(--background-main);
+  border: none;
+  /* border: 1px solid var(--border-color); */
   border-radius: 6px;
   resize: none;
   width: calc(100% - 1.5rem);
   margin: 0.5rem 0.75rem 0 0.75rem;
   padding: 0.5rem;
+  color: var(--text-color);
 }
 
 .tag-editable textarea:last-of-type {
@@ -72,47 +55,14 @@
 
 .tag-editable textarea:focus {
   outline: none;
-  border-color: #666;
+  border-color: var(--border-color);
 }
 
 .tag-editable textarea[name="title"] {
-  font-weight: 600;
   font-size: 1rem;
 }
 
-/* Скроллбар */
 .tag-editable .tag-body::-webkit-scrollbar,
 .tag-editable textarea::-webkit-scrollbar {
   width: 5px;
-}
-
-.tag .tag-body::-webkit-scrollbar-track,
-.tag-editable textarea::-webkit-scrollbar-track {
-  background: #e5e5e5;
-}
-
-.tag .tag-body::-webkit-scrollbar-thumb,
-.tag-editable textarea::-webkit-scrollbar-thumb {
-  background: #bbb;
-}
-
-.tag[draggable="true"]:active {
-  cursor: grabbing;
-}
-
-@media (max-width: 768px) {
-  .tag {
-    min-width: 180px;
-    min-height: 130px;
-  }
-
-  .tag .tag-title {
-    font-size: 0.875rem;
-    padding: 0.6rem 0.6rem 0.2rem 0.6rem;
-  }
-
-  .tag .tag-body {
-    font-size: 0.75rem;
-    padding: 0 0.6rem 0.6rem 0.6rem;
-  }
 }

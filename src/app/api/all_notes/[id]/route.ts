@@ -49,6 +49,8 @@ export async function GET(
           desk,
           x,
           y,
+          height,
+          width,
           "deskId",
           "createdAt"
         FROM notes 
