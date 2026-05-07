@@ -1,25 +1,24 @@
 :root {
   --footer-height: 68px;
+  --header-height: 48px;
   --actions-height: 56px;
+
   --sidebar-width: 320px;
-  --sidebar-width-collapsed: 72px;
+
   --transition-speed: 0.25s;
+
   --border-radius-sm: 8px;
   --border-radius-md: 14px;
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+
   --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 12px 30px rgba(0, 0, 0, 0.18);
+
+  --z-sidebar: 1000;
 }
 
-/* ===== ROOT LAYOUT ===== */
-
-.wrapper {
-  align-items: center;
-}
+/* ===== LAYOUT ===== */
 
 .desk-container {
   position: relative;
-  display: flex;
   width: 100vw;
   height: calc(100vh - var(--header-height) - var(--footer-height));
   overflow: hidden;
@@ -30,191 +29,71 @@
 
 .side-container {
   position: fixed;
+
+  top: var(--header-height);
   left: 0;
-  width: var(--sidebar-width);
-  height: calc(100% - var(--header-height) - var(--footer-height));
-  z-index: 1000;
 
   display: flex;
   flex-direction: column;
 
   background: var(--background-main);
-  border-right: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
 
-  transition: transform var(--transition-speed) ease,
-    width var(--transition-speed) ease;
+  border-right: 1px solid var(--border-color);
+
+  z-index: var(--z-sidebar);
+  transition: transform var(--transition-speed) ease;
+  box-shadow: var(--shadow-md);
 }
 
-/* ===== ACTIONS ===== */
+.side-container.open {
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--header-height) - var(--footer-height));
+}
 
 .actions-desk {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-
   width: 100%;
   min-height: var(--actions-height);
-
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.75rem;
-
   border-bottom: 1px solid var(--border-color);
-
   background: var(--background-secondary);
-
-  flex-shrink: 0;
 }
 
 .actions-desk button {
   display: flex;
   align-items: center;
   justify-content: center;
-
   width: 44px;
   height: 44px;
-
-  border: none;
-  border-radius: var(--border-radius-sm);
-
-  background: transparent;
-  color: var(--text-color);
-
   cursor: pointer;
-
-  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.actions-desk button:hover {
-  background: var(--background-root);
-}
-
-.actions-desk button:active {
-  transform: scale(0.95);
-}
-
-/* ===== NOTES SIDEBAR ===== */
+/* ===== NOTES LIST ===== */
 
 .desk-aside {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  flex: 1;
 
   overflow-y: auto;
   overflow-x: hidden;
 
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
   padding: 1rem;
 
   background: var(--background-main);
-
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
 }
 
-.desk-aside::-webkit-scrollbar {
-  width: 6px;
-}
-
-.desk-aside::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 999px;
-}
-
-.desk-aside::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* ===== DESK ===== */
-
-.desk {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--background-root);
-}
-
-/* ===== STATES ===== */
-
-.loading-state,
-.empty-state {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  min-height: 160px;
-
-  padding: 1rem;
-
-  text-align: center;
-
-  color: var(--light-text-color);
-  font-size: 0.95rem;
-}
-
-/* ===== TABLET ===== */
-
-@media (max-width: 1024px) {
-  :root {
-    --sidebar-width: 280px;
-  }
-
-  .desk-aside {
-    padding: 0.75rem;
-  }
-}
-
-/* ===== MOBILE ===== */
-
-@media (max-width: 767px) {
-  :root {
-    --sidebar-width: min(85vw, 320px);
-  }
-
-  .desk-container {
-    padding-left: 0;
-  }
-
+@media (max-width: 768px) {
   .side-container {
-    width: var(--sidebar-width);
-
-    transform: translateX(-100%);
-
-    backdrop-filter: blur(12px);
-
-    border-right: 1px solid var(--border-color);
-
-    background: rgba(20, 20, 20, 0.95);
+    top: 24px;
   }
-
   .side-container.open {
-    transform: translateX(0);
-  }
-
-  .desk-aside {
-    padding-bottom: 5rem;
-  }
-
-  .actions-desk {
-    padding: 0.5rem 0.75rem;
-  }
-
-  .actions-desk button {
-    width: 42px;
-    height: 42px;
-  }
-}
-
-/* ===== SMALL MOBILE ===== */
-
-@media (max-width: 480px) {
-  :root {
-    --sidebar-width: 100vw;
-  }
-
-  .side-container {
-    width: 100vw;
-  }
-
-  .desk-aside {
-    padding: 0.75rem;
+    width: var(--sidebar-width);
+    height: calc(100vh - 24px - var(--footer-height));
   }
 }

@@ -220,7 +220,7 @@ header a {
 
 @media (max-width: 768px) {
   :root {
-    --header-height: 48px;
+    --header-height: 24px;
   }
   .mobile.expanded {
     height: 40px;

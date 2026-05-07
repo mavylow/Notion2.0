@@ -56,7 +56,7 @@ function Desk() {
   }, [tags]);
 
   const [lastClickTime, setLastClickTime] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(!isMobile);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [isNoteFullScreen, setNoteFullScreen] = useState(null);
 
   const activeNoteRef = useRef(activeNote);
@@ -65,24 +65,27 @@ function Desk() {
 
   const scaleBy = 1.05;
 
-  useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      setIsExpanded(!mobile);
+  // useEffect(() => {
+  //   const checkMobile = () => {
+  //     const mobile = window.innerWidth < 768;
 
-      if (deskContainerRef.current) {
-        setStageSize({
-          width: deskContainerRef.current.clientWidth,
-          height: deskContainerRef.current.clientHeight,
-        });
-      }
-    };
+  //     setIsMobile(mobile);
 
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  //     if (mobile) {
+  //       setIsExpanded(false);
+  //     }
+
+  //     if (deskContainerRef.current) {
+  //       setStageSize({
+  //         width: deskContainerRef.current.clientWidth,
+  //         height: deskContainerRef.current.clientHeight,
+  //       });
+  //     }
+  //   };
+  //   checkMobile();
+  //   window.addEventListener("resize", checkMobile);
+  //   return () => window.removeEventListener("resize", checkMobile);
+  // }, []);
 
   const handleWheel = useCallback((e) => {
     e.evt.preventDefault();
@@ -502,13 +505,11 @@ function Desk() {
             Icon={HamburgerMenuIcon}
           />
 
-          {isExpanded && (
-            <Button
-              type="button"
-              onButtonClick={backToDesks}
-              Icon={ArrowLeftIcon}
-            />
-          )}
+          <Button
+            type="button"
+            onButtonClick={backToDesks}
+            Icon={ArrowLeftIcon}
+          />
         </div>
 
         {isExpanded && (
