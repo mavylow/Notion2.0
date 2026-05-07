@@ -82,7 +82,6 @@ export async function GET(
         const addPermissionQuery = `
           INSERT INTO permissions ("userId", "grantedBy", "permissionStatus", "deskId", "grantedAt")
           VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT ("userId", "deskId") DO NOTHING
         `;
         await pool.query(addPermissionQuery, [
           userId,
