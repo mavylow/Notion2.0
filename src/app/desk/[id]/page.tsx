@@ -599,6 +599,7 @@ function Desk() {
                       tag={tag}
                       onFocusChange={handleChangeFocus}
                       onDragEnd={moveTag}
+                      scale={stageState.scale}
                     />
                   )
                 )}

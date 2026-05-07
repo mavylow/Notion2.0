@@ -1,20 +1,32 @@
 import { IDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
 import { ParamValue } from "next/dist/server/request/params";
+import { StorageUtil } from "./storageUtil";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
-export const API_URL = "http://localhost:3001";
+
+export const getApiUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+};
+
+export const API_URL = getApiUrl();
 
 export async function fetchRESTData(
   api: string,
   method: apiMethod,
   body?: string
 ) {
-  const token = localStorage.getItem("token");
+  const apiPath = api.startsWith("/") ? api : `/${api}`;
+  const fullUrl = `${getApiUrl()}${apiPath}`;
+
+  const token = StorageUtil.get("token");
 
   const config: AxiosRequestConfig = {
     method: method.toLowerCase(),
-    url: api,
+    url: fullUrl,
     headers: {
       "Content-Type": "application/json;charset=utf-8",
     },
@@ -55,7 +67,7 @@ export async function fetchRESTData(
 
 export async function fetchGraphQLData(body?: string) {
   try {
-    const token = localStorage.getItem("token");
+    const token = StorageUtil.get("token");
 
     const response = await fetch("/api/graphql", {
       method: "POST",
@@ -79,7 +91,7 @@ export async function fetchGraphQLData(body?: string) {
 }
 
 export const loadPosts = async () => {
-  const posts = await fetchRESTData(`api/posts`, "GET");
+  const posts = await fetchRESTData(`/api/posts`, "GET");
   return posts.data;
 };
 
@@ -135,11 +147,11 @@ export const addComment = async (commentData: string) => {
 };
 
 export const likePost = async (postId: number) => {
-  await fetchRESTData("api/like", "POST", JSON.stringify({ postId }));
+  await fetchRESTData("/api/like", "POST", JSON.stringify({ postId }));
 };
 
 export const dislikePost = async (postId: number) => {
-  await fetchRESTData("api/dislike", "POST", JSON.stringify({ postId }));
+  await fetchRESTData("/api/dislike", "POST", JSON.stringify({ postId }));
 };
 
 export const getSuggested = async () => {
@@ -165,14 +177,6 @@ export const getStatisticPosts = async () => {
 export const getStatisticComments = async () => {
   const comments = await fetchRESTData(`/api/me/comments`, "GET");
   return comments.data;
-};
-
-export const getNotes = (page: number, per_page: number) => {
-  const res = fetchRESTData(
-    `${API_URL}/notes/page/${page}/per/${per_page}`,
-    "GET"
-  );
-  return res;
 };
 
 export const getNote = async (id: number | string) => {

@@ -12,7 +12,7 @@ const DeskSchema = z.object({
 
 const SECRET_KEY = process.env.SECRET_KEY;
 
-export async function GET(request) {
+export async function GET() {
   try {
     const token = (await cookies()).get("session")?.value;
 

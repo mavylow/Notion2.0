@@ -8,16 +8,18 @@ import { Group, Rect } from "react-konva";
 import Markdown from "react-markdown";
 import { Html } from "react-konva-utils";
 import "@components/Tag/style.css";
-import "@components/Tag/style.css";
+import remarkGfm from "remark-gfm";
 
 function Tag({
   tag,
   onFocusChange,
   onDragEnd,
+  scale,
 }: {
   tag: ITag;
   onFocusChange: (id: number) => void;
   onDragEnd: (id: number, x: number, y: number) => void;
+  scale: number;
 }) {
   const { title, body, id, x, y, deskId, height, width } = tag;
   const { sendSocketMessage } = useContext(SocketContext);
@@ -47,25 +49,29 @@ function Tag({
           onFocusChange(id);
         }}
       >
-        <Rect width={width} height={height} fill="transparent" />
+        <Rect
+          width={width / scale}
+          height={height / scale}
+          fill="transparent"
+        />
 
         <Html
           divProps={{
             style: {
               position: "absolute",
               pointerEvents: "none",
-              width: `${tag.width}px`,
-              height: `${tag.height}px`,
+              width: `${tag.width / scale}px`,
+              height: `${tag.height / scale}px`,
             },
           }}
         >
           <div className="tag-container">
             <div className="tag-title">
-              <Markdown>{title}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]}>{title}</Markdown>
             </div>
 
             <div className="tag-body">
-              <Markdown>{body}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]}>{body}</Markdown>
             </div>
           </div>
         </Html>

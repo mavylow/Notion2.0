@@ -93,7 +93,7 @@ function DeskList() {
         </div>
 
         {isExpanded && (
-          <aside className="desks-aside">
+          <aside className="desk-aside-">
             {desks?.map((desk) => {
               return (
                 <Preview

@@ -3,6 +3,7 @@ import { loginUser, logoutUser, restoreUser, signUpUser } from "@utils/apiUtil";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { modalSlice } from "@slices/modalSlice";
 import DOMPurify from "dompurify";
+import { StorageUtil } from "@/utils/storageUtil";
 
 interface IAuthState {
   user: IUser | null;
@@ -40,7 +41,7 @@ export const signIn = createAsyncThunk(
         })
       );
 
-      localStorage.setItem("token", token);
+      StorageUtil.set("token", token);
       return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Authentication failed";
@@ -72,7 +73,8 @@ export const restoreAuth = createAsyncThunk(
         );
         return user;
       } else {
-        localStorage.removeItem("token");
+        StorageUtil.remove("token");
+
         dispatch(
           modalSlice.actions.setModal({
             message: "restoreAuthStatus.warning",
@@ -91,7 +93,8 @@ export const restoreAuth = createAsyncThunk(
         })
       );
 
-      localStorage.removeItem("token");
+      StorageUtil.remove("token");
+
       return rejectWithValue("Auth check failed");
     }
   }

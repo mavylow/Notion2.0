@@ -2,8 +2,11 @@ import pool from "@/db/db";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
-export async function GET(request, { params }) {
-  const { id: postId } = await params;
+export async function GET(
+  NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
+  const { id: postId } = await context.params;
 
   try {
     const query = `

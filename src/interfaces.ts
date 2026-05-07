@@ -120,8 +120,6 @@ export interface INote {
   height?: number;
   width?: number;
   y: number;
-  height?: number;
-  width?: number;
   deskId: number;
   createdAt: string;
 }

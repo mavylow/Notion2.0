@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db.js";
 import jwt from "jsonwebtoken";
 import { cookies } from "next/headers";
@@ -6,10 +6,10 @@ import { cookies } from "next/headers";
 const SECRET_KEY = process.env.SECRET_KEY;
 
 export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  const { id } = await context.params;
   try {
     const token = (await cookies()).get("session")?.value;
 

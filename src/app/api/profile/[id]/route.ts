@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import pool from "@/db/db";
 
-export async function GET(_, { params }) {
-  const { id } = await params;
+export async function GET(_, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   try {
     const userQuery = `
         SELECT id, username, email, description, "profileImage", "firstName", "secondName"

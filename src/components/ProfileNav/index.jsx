@@ -1,19 +1,29 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useProfilePage } from "@/store/profileStore";
 import { useEffect } from "react";
+import { StorageUtil } from "@/utils/storageUtil";
 
 function ProfileNav() {
   const { t } = useTranslation();
   const { profilePage, changePage } = useProfilePage((state) => state);
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    const savedPage = localStorage?.getItem("profile");
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const savedPage = StorageUtil.get("profile");
     if (savedPage) {
       changePage(savedPage);
     }
-  }, [changePage]);
+  }, [changePage, mounted]);
 
   return (
     <nav>
