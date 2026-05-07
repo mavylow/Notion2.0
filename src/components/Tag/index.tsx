@@ -14,12 +14,10 @@ function Tag({
   tag,
   onFocusChange,
   onDragEnd,
-  scale,
 }: {
   tag: ITag;
   onFocusChange: (id: number) => void;
   onDragEnd: (id: number, x: number, y: number) => void;
-  scale: number;
 }) {
   const { title, body, id, x, y, deskId, height, width } = tag;
   const { sendSocketMessage } = useContext(SocketContext);
@@ -49,19 +47,15 @@ function Tag({
           onFocusChange(id);
         }}
       >
-        <Rect
-          width={width / scale}
-          height={height / scale}
-          fill="transparent"
-        />
+        <Rect width={width} height={height} fill="transparent" />
 
         <Html
           divProps={{
             style: {
               position: "absolute",
               pointerEvents: "none",
-              width: `${tag.width / scale}px`,
-              height: `${tag.height / scale}px`,
+              width: `${tag.width}px`,
+              height: `${tag.height}px`,
             },
           }}
         >

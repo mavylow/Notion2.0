@@ -65,7 +65,6 @@ function Desk() {
 
   const scaleBy = 1.05;
 
-  // Detect mobile and resize
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
@@ -415,8 +414,8 @@ function Desk() {
 
             sendSocketMessage(socketActions.RESIZE, {
               id: activeNote.id,
-              height: Math.round(height),
-              width: Math.round(width),
+              height: Math.round(height / stageState.scale),
+              width: Math.round(width / stageState.scale),
               deskId,
             });
 
@@ -424,8 +423,8 @@ function Desk() {
               id: activeNote.id,
               title: activeNote.title,
               body: activeNote.body,
-              height: Math.round(height),
-              width: Math.round(width),
+              height: Math.round(height / stageState.scale),
+              width: Math.round(width / stageState.scale),
             });
           }
         }
@@ -495,7 +494,7 @@ function Desk() {
 
   return (
     <>
-      <div className="side-container">
+      <div className={`side-container ${isExpanded ? "open" : ""}`}>
         <div className="actions-desk">
           <Button
             type="button"
@@ -599,7 +598,6 @@ function Desk() {
                       tag={tag}
                       onFocusChange={handleChangeFocus}
                       onDragEnd={moveTag}
-                      scale={stageState.scale}
                     />
                   )
                 )}
