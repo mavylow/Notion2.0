@@ -16,7 +16,10 @@ app.prepare().then(() => {
 
   const io = new Server(httpServer, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: [
+        "http://localhost:3000",
+        "https://notion20-production.up.railway.app",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },

@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const insertUserQuery = `
-      INSERT INTO users (email, password, username, "creationDate")
+      INSERT INTO users (email, password, username, creationdate)
       VALUES ($1, $2, $3, $4)
-      RETURNING id, email, username, "creationDate"
+      RETURNING id, email, username, creationdate
     `;
 
     const result = await pool.query(insertUserQuery, [
