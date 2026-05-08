@@ -1,4 +1,3 @@
-// server.js - исправленный
 import { createServer } from "node:http";
 import next from "next";
 import { Server } from "socket.io";
@@ -14,14 +13,22 @@ app.prepare().then(() => {
     handler(req, res);
   });
 
+  // ✅ КРИТИЧНО - правильная конфигурация CORS для Railway
   const io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin: [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+      ],
       methods: ["GET", "POST"],
       credentials: true,
+      allowEIO3: true,
     },
-    transports: ["websocket"],
+    transports: ["websocket", "polling"],
     allowUpgrades: true,
+    pingInterval: 25000,
+    pingTimeout: 60000,
   });
 
   const roomStates = new Map();
@@ -29,6 +36,7 @@ app.prepare().then(() => {
   io.on("connection", (socket) => {
     console.log("✅ User connected:", socket.id);
 
+    // ✅ join desk
     socket.on("join desk", ({ deskId, username }) => {
       socket.join(String(deskId));
       socket.data.deskId = deskId;
@@ -36,8 +44,8 @@ app.prepare().then(() => {
 
       console.log(`📌 ${username} joined desk ${deskId}`);
 
-      if (roomStates.has(deskId)) {
-        socket.emit("room_state", roomStates.get(deskId));
+      if (roomStates.has(String(deskId))) {
+        socket.emit("room_state", roomStates.get(String(deskId)));
       }
 
       io.to(String(deskId)).emit("joined", {
@@ -47,74 +55,92 @@ app.prepare().then(() => {
       });
     });
 
-    socket.on("active_note_changed", ({ id, name, value, deskId }) => {
+    // ✅ CHANGE - редактирование заметки
+    socket.on("CHANGE", ({ id, name, value, deskId }) => {
       console.log(`📝 Note changed: ${id}, ${name}=${value}`);
-      socket.to(String(deskId)).emit("active_note_changed", {
+      socket.to(String(deskId)).emit("CHANGE", {
         id,
         name,
         value,
       });
     });
 
-    socket.on("add_note", (note) => {
-      console.log(`➕ Note added: ${note.id} to desk ${note.deskId}`, note);
+    // ✅ ADD - добавление заметки
+    socket.on("ADD", (data) => {
+      const deskId = String(data.deskId);
+      console.log(`➕ Note added: ${data.id} to desk ${deskId}`);
 
-      const deskId = String(note.deskId);
       if (!roomStates.has(deskId)) {
         roomStates.set(deskId, { notes: [] });
       }
-      roomStates.get(deskId).notes.push(note);
 
-      io.to(deskId).emit("add_note", note);
-    });
-
-    socket.on("delete_note", ({ id, deskId }) => {
-      console.log(`❌ Note deleted: ${id} from desk ${deskId}`);
-
-      const deskIdStr = String(deskId);
-      if (roomStates.has(deskIdStr)) {
-        roomStates.set(deskIdStr, {
-          notes: roomStates.get(deskIdStr).notes.filter((n) => n.id !== id),
-        });
+      // Добавляем в состояние
+      if (!roomStates.get(deskId).notes.find((n) => n.id === data.id)) {
+        roomStates.get(deskId).notes.push(data);
       }
 
-      socket.to(deskIdStr).emit("delete_note", { id });
+      // ✅ Отправляем всем в комнате, включая отправителя
+      io.to(deskId).emit("ADD", data);
     });
 
-    socket.on("move_note", ({ id, x, y, deskId }) => {
-      console.log(`📍 Note moved: ${id} to (${x}, ${y}) in desk ${deskId}`);
+    // ✅ DELETE - удаление заметки
+    socket.on("DELETE", ({ id, deskId }) => {
+      const deskIdStr = String(deskId);
+      console.log(`❌ Note deleted: ${id} from desk ${deskIdStr}`);
 
-      if (roomStates.has(deskId)) {
+      if (roomStates.has(deskIdStr)) {
+        const state = roomStates.get(deskIdStr);
+        state.notes = state.notes.filter((n) => n.id !== id);
+      }
+
+      io.to(deskIdStr).emit("DELETE", { id });
+    });
+
+    // ✅ MOVE - перемещение заметки
+    socket.on("MOVE", ({ id, x, y, deskId }) => {
+      const deskIdStr = String(deskId);
+      console.log(`📍 Note moved: ${id} to (${x}, ${y}) in desk ${deskIdStr}`);
+
+      if (roomStates.has(deskIdStr)) {
         const noteIndex = roomStates
-          .get(deskId)
+          .get(deskIdStr)
           .notes.findIndex((n) => n.id === id);
         if (noteIndex !== -1) {
-          roomStates.get(deskId).notes[noteIndex] = { ...note };
+          roomStates.get(deskIdStr).notes[noteIndex].x = x;
+          roomStates.get(deskIdStr).notes[noteIndex].y = y;
         }
       }
 
-      io.to(`${deskId}`).emit("move_note", { id, x, y, deskId });
+      io.to(deskIdStr).emit("MOVE", { id, x, y });
     });
 
-    socket.on("resize_note", ({ id, height, width, deskId }) => {
+    // ✅ RESIZE - изменение размера заметки
+    socket.on("RESIZE", ({ id, height, width, deskId }) => {
+      const deskIdStr = String(deskId);
       console.log(
-        `📍 Note resized: ${id} to (${height}, ${width}) in desk ${deskId}`
+        `📏 Note resized: ${id} to (${height}x${width}) in desk ${deskIdStr}`
       );
 
-      if (roomStates.has(deskId)) {
+      if (roomStates.has(deskIdStr)) {
         const noteIndex = roomStates
-          .get(deskId)
-          .notes.findIndex((n) => n.id === note.id);
+          .get(deskIdStr)
+          .notes.findIndex((n) => n.id === id);
         if (noteIndex !== -1) {
-          roomStates.get(deskId).notes[noteIndex] = { ...note };
+          roomStates.get(deskIdStr).notes[noteIndex].height = height;
+          roomStates.get(deskIdStr).notes[noteIndex].width = width;
         }
       }
 
-      io.to(`${deskId}`).emit("resize_note", { id, height, width, deskId });
+      io.to(deskIdStr).emit("RESIZE", { id, height, width });
     });
 
     socket.on("disconnect", () => {
       console.log(`❌ User disconnected: ${socket.id}`);
+    });
+
+    // ✅ Обработка ошибок
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
     });
   });
 
