@@ -83,7 +83,6 @@ app.prepare().then(() => {
       io.to(deskId).emit("ADD", data);
     });
 
-    // ✅ DELETE - удаление заметки
     socket.on("DELETE", ({ id, deskId }) => {
       const deskIdStr = String(deskId);
       console.log(`❌ Note deleted: ${id} from desk ${deskIdStr}`);
@@ -96,7 +95,6 @@ app.prepare().then(() => {
       io.to(deskIdStr).emit("DELETE", { id });
     });
 
-    // ✅ MOVE - перемещение заметки
     socket.on("MOVE", ({ id, x, y, deskId }) => {
       const deskIdStr = String(deskId);
       console.log(`📍 Note moved: ${id} to (${x}, ${y}) in desk ${deskIdStr}`);
@@ -114,7 +112,6 @@ app.prepare().then(() => {
       io.to(deskIdStr).emit("MOVE", { id, x, y });
     });
 
-    // ✅ RESIZE - изменение размера заметки
     socket.on("RESIZE", ({ id, height, width, deskId }) => {
       const deskIdStr = String(deskId);
       console.log(
@@ -138,7 +135,6 @@ app.prepare().then(() => {
       console.log(`❌ User disconnected: ${socket.id}`);
     });
 
-    // ✅ Обработка ошибок
     socket.on("error", (error) => {
       console.error("Socket error:", error);
     });
