@@ -26,8 +26,10 @@ function SocketProvider({ children }: PropsSocketProvider) {
     const socket = io(
       process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3000",
       {
-        transports: ["websocket", "polling"],
+        transports: ["websocket"],
         autoConnect: true,
+        upgrade: false,
+        reconnection: true,
       }
     );
 
