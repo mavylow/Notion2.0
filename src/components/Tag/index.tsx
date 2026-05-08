@@ -46,6 +46,9 @@ function Tag({
         onClick={() => {
           onFocusChange(id);
         }}
+        onTap={() => {
+          onFocusChange(id);
+        }}
       >
         <Rect width={width} height={height} fill="transparent" />
 

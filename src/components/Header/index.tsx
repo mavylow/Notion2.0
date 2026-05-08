@@ -139,9 +139,7 @@ function Header() {
                         priority={true}
                       />
                     </Link>
-                    <Link href={"/profile"}>
-                      {user.firstName} {user.secondName}
-                    </Link>
+                    <Link href={"/profile"}>{user.username}</Link>
                     <Link data-testid="statistics" href={"/desk"}>
                       {t("desks")}
                     </Link>

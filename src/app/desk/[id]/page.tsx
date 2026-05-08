@@ -501,14 +501,13 @@ function Desk() {
         <div className="actions-desk">
           <Button
             type="button"
-            onButtonClick={handleExpand}
-            Icon={HamburgerMenuIcon}
-          />
-
-          <Button
-            type="button"
             onButtonClick={backToDesks}
             Icon={ArrowLeftIcon}
+          />
+          <Button
+            type="button"
+            onButtonClick={handleExpand}
+            Icon={HamburgerMenuIcon}
           />
         </div>
 
