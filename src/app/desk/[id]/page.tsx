@@ -44,12 +44,9 @@ function Desk() {
     scale: 1,
   });
 
-  const [lastCenter, setLastCenter] = useState(null);
-  const [lastDist, setLastDist] = useState(0);
-  const [dragStopped, setDragStopped] = useState(false);
-  const [isZooming, setIsZooming] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
-  const panStartRef = useRef({ x: 0, y: 0 });
+  const lastCenterRef = useRef(null);
+  const lastDistRef = useRef(0);
+  const dragStoppedRef = useRef(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -476,124 +473,87 @@ function Desk() {
     return transform.point({ x, y });
   }, []);
 
-  const handleTouchMove = useCallback(
-    (e) => {
-      const stage = stageRef.current;
-      if (!stage) return;
-
-      const touch1 = e.evt.touches[0];
-      const touch2 = e.evt.touches[1];
-
-      if (touch1 && touch2) {
-        e.evt.preventDefault();
-        setIsZooming(true);
-
-        if (stage.isDragging()) {
-          stage.stopDrag();
-          setDragStopped(true);
-        }
-
-        const rect = stage.container().getBoundingClientRect();
-
-        const p1 = {
-          x: touch1.clientX - rect.left,
-          y: touch1.clientY - rect.top,
-        };
-
-        const p2 = {
-          x: touch2.clientX - rect.left,
-          y: touch2.clientY - rect.top,
-        };
-
-        const newCenter = getCenter(p1, p2);
-        const dist = getDistance(p1, p2);
-
-        if (!lastCenter) {
-          setLastCenter(newCenter);
-          return;
-        }
-
-        if (!lastDist) {
-          setLastDist(dist);
-          return;
-        }
-
-        const pointTo = {
-          x: (newCenter.x - stageState.x) / stageState.scale,
-          y: (newCenter.y - stageState.y) / stageState.scale,
-        };
-
-        const scaleFactor = dist / lastDist;
-        const newScale = Math.max(
-          0.1,
-          Math.min(10, stageState.scale * scaleFactor)
-        );
-
-        const dx = newCenter.x - lastCenter.x;
-        const dy = newCenter.y - lastCenter.y;
-
-        setStageState({
-          scale: newScale,
-          x: newCenter.x - pointTo.x * newScale + dx,
-          y: newCenter.y - pointTo.y * newScale + dy,
-        });
-
-        setLastDist(dist);
-        setLastCenter(newCenter);
-      } else if (touch1 && !touch2) {
-        if (isZooming) {
-          setIsZooming(false);
-          setLastCenter(null);
-          setLastDist(0);
-        }
-
-        setIsPanning(true);
-
-        if (!stage.isDragging() && dragStopped) {
-          stage.startDrag();
-          setDragStopped(false);
-        }
-      }
-    },
-    [dragStopped, lastCenter, lastDist, stageState, isZooming]
-  );
-
-  const handleTouchEnd = () => {
-    setLastDist(0);
-    setLastCenter(null);
-    setIsZooming(false);
-    setIsPanning(false);
-  };
-
-  const handleDragEnd = (e) => {
-    if (!isZooming && isPanning) {
-      setStageState((prev) => ({
-        ...prev,
-        x: e.target.x(),
-        y: e.target.y(),
-      }));
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    if (e.evt.button === 0 && !isZooming) {
-      setIsPanning(true);
-      panStartRef.current = {
-        x: e.evt.clientX,
-        y: e.evt.clientY,
-      };
-    }
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isPanning || isZooming) return;
-
+  const handleTouchMove = useCallback((e) => {
     const stage = stageRef.current;
     if (!stage) return;
-  };
 
-  const handleMouseUp = () => {
-    setIsPanning(false);
+    const touch1 = e.evt.touches[0];
+    const touch2 = e.evt.touches[1];
+
+    // pinch zoom
+    if (touch1 && touch2) {
+      e.evt.preventDefault();
+
+      if (stage.isDragging()) {
+        stage.stopDrag();
+        dragStoppedRef.current = true;
+      }
+
+      const rect = stage.container().getBoundingClientRect();
+
+      const p1 = {
+        x: touch1.clientX - rect.left,
+        y: touch1.clientY - rect.top,
+      };
+
+      const p2 = {
+        x: touch2.clientX - rect.left,
+        y: touch2.clientY - rect.top,
+      };
+
+      const center = getCenter(p1, p2);
+      const dist = getDistance(p1, p2);
+
+      if (!lastCenterRef.current) {
+        lastCenterRef.current = center;
+        return;
+      }
+
+      if (!lastDistRef.current) {
+        lastDistRef.current = dist;
+        return;
+      }
+
+      const oldScale = stage.scaleX();
+
+      const pointTo = {
+        x: (center.x - stage.x()) / oldScale,
+        y: (center.y - stage.y()) / oldScale,
+      };
+
+      const scale = oldScale * (dist / lastDistRef.current);
+
+      const newScale = Math.max(0.1, Math.min(scale, 10));
+
+      stage.scale({
+        x: newScale,
+        y: newScale,
+      });
+
+      const dx = center.x - lastCenterRef.current.x;
+      const dy = center.y - lastCenterRef.current.y;
+
+      const newPos = {
+        x: center.x - pointTo.x * newScale + dx,
+        y: center.y - pointTo.y * newScale + dy,
+      };
+
+      stage.position(newPos);
+
+      setStageState({
+        x: newPos.x,
+        y: newPos.y,
+        scale: newScale,
+      });
+
+      lastDistRef.current = dist;
+      lastCenterRef.current = center;
+    }
+  }, []);
+
+  const handleTouchEnd = () => {
+    lastDistRef.current = 0;
+    lastCenterRef.current = null;
   };
 
   const getDistance = (p1, p2) => {
@@ -679,15 +639,13 @@ function Desk() {
               y={stageState.y}
               scaleX={stageState.scale}
               scaleY={stageState.scale}
+              draggable
               onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
-              onDragEnd={handleDragEnd}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-              onMouseMove={handleMouseMove}
-              draggable
-              listening={true}
+              style={{
+                touchAction: "none",
+              }}
             >
               <Layer>
                 <Shape
