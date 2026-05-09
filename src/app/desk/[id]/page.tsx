@@ -36,14 +36,8 @@ function Desk() {
   const [deskId, setDeskId] = useState(null);
   const [tags, setTags] = useState([]);
 
-  const [stageSize, setStageSize] = useState({ width: 2000, height: 2000 });
-
-  const [stageState, setStageState] = useState({
-    x: 0,
-    y: 0,
-    scale: 1,
-  });
-
+  const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
+  const [stageScale, setStageScale] = useState({ x: 1, y: 1 });
   const [lastCenter, setLastCenter] = useState(null);
   const [lastDist, setLastDist] = useState(0);
   const [dragStopped, setDragStopped] = useState(false);
@@ -91,11 +85,9 @@ function Desk() {
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale,
     });
-    setStageState({
-      x: stage.x(),
-      y: stage.y(),
-      scale: stage.scaleX(),
-    });
+
+    setStagePos({ x: stage.x(), y: stage.y() });
+    setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
   }, []);
 
   useEffect(() => {
@@ -395,8 +387,8 @@ function Desk() {
 
             sendSocketMessage(socketActions.RESIZE, {
               id: activeNote.id,
-              height: Math.round(height / stageState.scale),
-              width: Math.round(width / stageState.scale),
+              height: Math.round(height / stageScale.y),
+              width: Math.round(width / stageScale.x),
               deskId,
             });
 
@@ -404,8 +396,8 @@ function Desk() {
               id: activeNote.id,
               title: activeNote.title,
               body: activeNote.body,
-              height: Math.round(height / stageState.scale),
-              width: Math.round(width / stageState.scale),
+              height: Math.round(height / stageScale.y),
+              width: Math.round(width / stageScale.x),
             });
           }
         }
@@ -489,20 +481,19 @@ function Desk() {
   const handleTouchMove = useCallback(
     (e) => {
       e.evt.preventDefault();
-      const stage = e.target.getStage();
-      if (!stage) return;
-
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
+      const stage = e.target.getStage();
 
+      // we need to restore dragging, if it was cancelled by multi-touch
       if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
         stage.startDrag();
         setDragStopped(false);
       }
 
       if (touch1 && touch2) {
-        e.evt.preventDefault();
-
+        // if the stage was under Konva's drag&drop
+        // we need to stop it, and implement our own pan logic with two pointers
         if (stage.isDragging()) {
           stage.stopDrag();
           setDragStopped(true);
@@ -514,54 +505,46 @@ function Desk() {
           x: touch1.clientX - rect.left,
           y: touch1.clientY - rect.top,
         };
-
         const p2 = {
           x: touch2.clientX - rect.left,
           y: touch2.clientY - rect.top,
         };
 
-        const newCenter = getCenter(p1, p2);
-        const dist = getDistance(p1, p2);
-
         if (!lastCenter) {
-          setLastCenter(newCenter);
-          setLastDist(dist);
+          setLastCenter(getCenter(p1, p2));
           return;
         }
+        const newCenter = getCenter(p1, p2);
 
-        if (lastDist === 0) {
+        const dist = getDistance(p1, p2);
+
+        if (!lastDist) {
           setLastDist(dist);
           return;
         }
 
         const pointTo = {
-          x: (newCenter.x - stageState.x) / stageState.scale,
-          y: (newCenter.y - stageState.y) / stageState.scale,
+          x: (newCenter.x - stagePos.x) / stageScale.x,
+          y: (newCenter.y - stagePos.y) / stageScale.x,
         };
 
-        const scaleFactor = dist / lastDist;
-        const newScale = Math.max(
-          0.1,
-          Math.min(10, stageState.scale * scaleFactor)
-        );
+        const scale = stageScale.x * (dist / lastDist);
+
+        setStageScale({ x: scale, y: scale });
 
         const dx = newCenter.x - lastCenter.x;
         const dy = newCenter.y - lastCenter.y;
 
-        setStageState({
-          scale: newScale,
-          x: newCenter.x - pointTo.x * newScale + dx,
-          y: newCenter.y - pointTo.y * newScale + dy,
+        setStagePos({
+          x: newCenter.x - pointTo.x * scale + dx,
+          y: newCenter.y - pointTo.y * scale + dy,
         });
 
         setLastDist(dist);
         setLastCenter(newCenter);
-      } else if (touch1 && !touch2) {
-        setLastCenter(null);
-        setLastDist(0);
       }
     },
-    [lastCenter, lastDist, stageState]
+    [dragStopped, lastCenter, lastDist, stagePos, stageScale]
   );
 
   const handleTouchEnd = () => {
@@ -572,12 +555,7 @@ function Desk() {
   const handleDragEnd = (e) => {
     setDragStopped(false);
     const stage = e.target.getStage();
-
-    setStageState((prev) => ({
-      ...prev,
-      x: stage.x(),
-      y: stage.y(),
-    }));
+    setStagePos({ x: stage.x(), y: stage.y() });
   };
 
   return (
@@ -644,12 +622,12 @@ function Desk() {
           >
             <Stage
               ref={stageRef}
-              width={stageSize.width}
-              height={stageSize.height}
-              x={stageState.x}
-              y={stageState.y}
-              scaleX={stageState.scale}
-              scaleY={stageState.scale}
+              width={2000}
+              height={2000}
+              x={stagePos.x}
+              y={stagePos.y}
+              scaleX={stageScale.x}
+              scaleY={stageScale.y}
               onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
