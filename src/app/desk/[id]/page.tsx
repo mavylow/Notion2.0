@@ -46,8 +46,7 @@ function Desk() {
 
   const [lastCenter, setLastCenter] = useState(null);
   const [lastDist, setLastDist] = useState(0);
-  const [isZooming, setIsZooming] = useState(false);
-  const dragStoppedRef = useRef(false);
+  const [dragStopped, setDragStopped] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -490,80 +489,84 @@ function Desk() {
   const handleTouchMove = useCallback(
     (e) => {
       const stage = stageRef.current;
+
       if (!stage) return;
+
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
-      // ✅ Двойной touch - zoom
+
+      if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
+        stage.startDrag();
+        setDragStopped(false);
+      }
+
       if (touch1 && touch2) {
         e.evt.preventDefault();
-        setIsZooming(true);
+
         if (stage.isDragging()) {
           stage.stopDrag();
+          setDragStopped(true);
         }
-        const rect = stage.container().getBoundingCl;
+
+        const rect = stage.container().getBoundingClientRect();
+
         const p1 = {
           x: touch1.clientX - rect.left,
           y: touch1.clientY - rect.top,
         };
+
         const p2 = {
           x: touch2.clientX - rect.left,
           y: touch2.clientY - rect.top,
         };
+
         const newCenter = getCenter(p1, p2);
         const dist = getDistance(p1, p2);
-        // ✅ Первый touch - инициализируем
+
         if (!lastCenter) {
           setLastCenter(newCenter);
+          return;
+        }
+
+        if (!lastDist) {
           setLastDist(dist);
           return;
         }
-        if (lastDist === 0) {
-          setLastDist(dist);
-          return;
-        }
-        // ✅ Вычисляем зум
-        const scaleFactor = dist / lastDist;
-        const newScale = Math.max(
-          0.1,
-          Math.min(10, stageState.scale * scaleFactor)
-        );
+
         const pointTo = {
           x: (newCenter.x - stageState.x) / stageState.scale,
           y: (newCenter.y - stageState.y) / stageState.scale,
         };
+
+        const scale = stageState.scale * (dist / lastDist);
+
         const dx = newCenter.x - lastCenter.x;
         const dy = newCenter.y - lastCenter.y;
+
         setStageState({
-          scale: newScale,
-          x: newCenter.x - pointTo.x * newScale + dx,
-          y: newCenter.y - pointTo.y * newScale + dy,
+          scale,
+          x: newCenter.x - pointTo.x * scale + dx,
+          y: newCenter.y - pointTo.y * scale + dy,
         });
+
         setLastDist(dist);
         setLastCenter(newCenter);
       }
-      // ✅ Одиночный touch - обычный drag
-      else if (touch1 && !touch2) {
-        setIsZooming(false);
-        setLastCenter(null);
-        setLastDist(0);
-      }
     },
-    [lastCenter, lastDist, stageState]
+    [dragStopped, lastCenter, lastDist, stageState]
   );
+
   const handleTouchEnd = () => {
     setLastDist(0);
     setLastCenter(null);
-    setIsZooming(false);
   };
 
   const handleDragEnd = (e) => {
-    if (!isZooming) {
-      setStageState((prev) => ({
-        ...prev,
-        x: e.target.x(),
-        y: e.target.y(),
-      }));
-    }
+    setStageState((prev) => ({
+      ...prev,
+      x: e.target.x(),
+      y: e.target.y(),
+    }));
   };
 
   return (
@@ -630,20 +633,17 @@ function Desk() {
           >
             <Stage
               ref={stageRef}
-              width={window.innerWidth}
-              height={window.innerHeight}
+              width={stageSize.width}
+              height={stageSize.height}
               x={stageState.x}
               y={stageState.y}
               scaleX={stageState.scale}
               scaleY={stageState.scale}
-              draggable
               onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onDragEnd={handleDragEnd}
-              style={{
-                touchAction: "none",
-              }}
+              draggable
             >
               <Layer>
                 <Shape
