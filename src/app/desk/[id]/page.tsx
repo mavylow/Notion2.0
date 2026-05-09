@@ -44,8 +44,9 @@ function Desk() {
     scale: 1,
   });
 
-  const lastCenterRef = useRef(null);
-  const lastDistRef = useRef(0);
+  const [lastCenter, setLastCenter] = useState(null);
+  const [lastDist, setLastDist] = useState(0);
+  const [isZooming, setIsZooming] = useState(false);
   const dragStoppedRef = useRef(false);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -473,89 +474,6 @@ function Desk() {
     return transform.point({ x, y });
   }, []);
 
-  const handleTouchMove = useCallback((e) => {
-    const stage = stageRef.current;
-    if (!stage) return;
-
-    const touch1 = e.evt.touches[0];
-    const touch2 = e.evt.touches[1];
-
-    // pinch zoom
-    if (touch1 && touch2) {
-      e.evt.preventDefault();
-
-      if (stage.isDragging()) {
-        stage.stopDrag();
-        dragStoppedRef.current = true;
-      }
-
-      const rect = stage.container().getBoundingClientRect();
-
-      const p1 = {
-        x: touch1.clientX - rect.left,
-        y: touch1.clientY - rect.top,
-      };
-
-      const p2 = {
-        x: touch2.clientX - rect.left,
-        y: touch2.clientY - rect.top,
-      };
-
-      const center = getCenter(p1, p2);
-      const dist = getDistance(p1, p2);
-
-      if (!lastCenterRef.current) {
-        lastCenterRef.current = center;
-        return;
-      }
-
-      if (!lastDistRef.current) {
-        lastDistRef.current = dist;
-        return;
-      }
-
-      const oldScale = stage.scaleX();
-
-      const pointTo = {
-        x: (center.x - stage.x()) / oldScale,
-        y: (center.y - stage.y()) / oldScale,
-      };
-
-      const scale = oldScale * (dist / lastDistRef.current);
-
-      const newScale = Math.max(0.1, Math.min(scale, 10));
-
-      stage.scale({
-        x: newScale,
-        y: newScale,
-      });
-
-      const dx = center.x - lastCenterRef.current.x;
-      const dy = center.y - lastCenterRef.current.y;
-
-      const newPos = {
-        x: center.x - pointTo.x * newScale + dx,
-        y: center.y - pointTo.y * newScale + dy,
-      };
-
-      stage.position(newPos);
-
-      setStageState({
-        x: newPos.x,
-        y: newPos.y,
-        scale: newScale,
-      });
-
-      lastDistRef.current = dist;
-      lastCenterRef.current = center;
-    }
-  }, []);
-
-  const handleTouchEnd = () => {
-    lastDistRef.current = 0;
-    lastCenterRef.current = null;
-  };
-
   const getDistance = (p1, p2) => {
     return Math.sqrt(
       (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
@@ -569,124 +487,202 @@ function Desk() {
     };
   };
 
-  return (
-    <>
-      <div className={`side-container ${isExpanded ? "open" : ""}`}>
-        <div className="actions-desk">
-          <Button
-            type="button"
-            onButtonClick={backToDesks}
-            Icon={ArrowLeftIcon}
-          />
-          <Button
-            type="button"
-            onButtonClick={handleExpand}
-            Icon={HamburgerMenuIcon}
-          />
-        </div>
+  const handleTouchMove = useCallback(
+    (e) => {
+      const stage = stageRef.current;
+      if (!stage) return;
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+      // ✅ Двойной touch - zoom
+      if (touch1 && touch2) {
+        e.evt.preventDefault();
+        setIsZooming(true);
+        if (stage.isDragging()) {
+          stage.stopDrag();
+        }
+        const rect = stage.container().getBoundingCl;
+        const p1 = {
+          x: touch1.clientX - rect.left,
+          y: touch1.clientY - rect.top,
+        };
+        const p2 = {
+          x: touch2.clientX - rect.left,
+          y: touch2.clientY - rect.top,
+        };
+        const newCenter = getCenter(p1, p2);
+        const dist = getDistance(p1, p2);
+        // ✅ Первый touch - инициализируем
+        if (!lastCenter) {
+          setLastCenter(newCenter);
+          setLastDist(dist);
+          return;
+        }
+        if (lastDist === 0) {
+          setLastDist(dist);
+          return;
+        }
+        // ✅ Вычисляем зум
+        const scaleFactor = dist / lastDist;
+        const newScale = Math.max(
+          0.1,
+          Math.min(10, stageState.scale * scaleFactor)
+        );
+        const pointTo = {
+          x: (newCenter.x - stageState.x) / stageState.scale,
+          y: (newCenter.y - stageState.y) / stageState.scale,
+        };
+        const dx = newCenter.x - lastCenter.x;
+        const dy = newCenter.y - lastCenter.y;
+        setStageState({
+          scale: newScale,
+          x: newCenter.x - pointTo.x * newScale + dx,
+          y: newCenter.y - pointTo.y * newScale + dy,
+        });
+        setLastDist(dist);
+        setLastCenter(newCenter);
+      }
+      // ✅ Одиночный touch - обычный drag
+      else if (touch1 && !touch2) {
+        setIsZooming(false);
+        setLastCenter(null);
+        setLastDist(0);
+      }
+    },
+    [lastCenter, lastDist, stageState]
+  );
+  const handleTouchEnd = () => {
+    setLastDist(0);
+    setLastCenter(null);
+    setIsZooming(false);
+  };
+  const handleDragEnd = (e) => {
+    if (!isZooming) {
+      setStageState((prev) => ({
+        ...prev,
+        x: e.target.x(),
+        y: e.target.y(),
+      }));
+    }
 
-        {isExpanded && (
-          <aside className="desk-aside">
-            {isNotesLoading ? (
-              <div className="loading-state">Loading...</div>
-            ) : (
-              <>
-                {tags?.length > 0 ? (
-                  tags.map((tag) => (
-                    <Preview
-                      key={tag.id}
-                      id={tag.id}
-                      {...tag}
-                      onDelete={(id) => handleDeleteNote.mutate(id)}
-                      onClick={(id, desk) => handleNotePreviewClick(id, desk)}
-                      onDoubleClick={() => console.log("double click")}
-                      type="note"
-                    />
-                  ))
-                ) : (
-                  <div className="empty-state">Заметки не найдены</div>
-                )}
-              </>
-            )}
-          </aside>
-        )}
-      </div>
-      <div className="desk-container" ref={deskContainerRef}>
-        {isNoteFullScreen ? (
-          <NotePreview
-            tag={activeNote}
-            onBackButtonClick={handleGoBackToDesk}
-          />
-        ) : (
-          <div
-            className="desk"
-            id="desk"
-            onDoubleClick={(e) => {
-              if (!(e.target as HTMLElement).closest(".tag")) {
-                const pos = screenToCanvas(e.clientX, e.clientY);
-                handleAddTag.mutate({
-                  pageX: Math.floor(pos.x),
-                  pageY: Math.floor(pos.y),
-                });
-              }
-            }}
-          >
-            <Stage
-              ref={stageRef}
-              width={window.innerWidth}
-              height={window.innerHeight}
-              x={stageState.x}
-              y={stageState.y}
-              scaleX={stageState.scale}
-              scaleY={stageState.scale}
-              draggable
-              onWheel={handleWheel}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                touchAction: "none",
+    return (
+      <>
+        <div className={`side-container ${isExpanded ? "open" : ""}`}>
+          <div className="actions-desk">
+            <Button
+              type="button"
+              onButtonClick={backToDesks}
+              Icon={ArrowLeftIcon}
+            />
+            <Button
+              type="button"
+              onButtonClick={handleExpand}
+              Icon={HamburgerMenuIcon}
+            />
+          </div>
+
+          {isExpanded && (
+            <aside className="desk-aside">
+              {isNotesLoading ? (
+                <div className="loading-state">Loading...</div>
+              ) : (
+                <>
+                  {tags?.length > 0 ? (
+                    tags.map((tag) => (
+                      <Preview
+                        key={tag.id}
+                        id={tag.id}
+                        {...tag}
+                        onDelete={(id) => handleDeleteNote.mutate(id)}
+                        onClick={(id, desk) => handleNotePreviewClick(id, desk)}
+                        onDoubleClick={() => console.log("double click")}
+                        type="note"
+                      />
+                    ))
+                  ) : (
+                    <div className="empty-state">Заметки не найдены</div>
+                  )}
+                </>
+              )}
+            </aside>
+          )}
+        </div>
+        <div className="desk-container" ref={deskContainerRef}>
+          {isNoteFullScreen ? (
+            <NotePreview
+              tag={activeNote}
+              onBackButtonClick={handleGoBackToDesk}
+            />
+          ) : (
+            <div
+              className="desk"
+              id="desk"
+              onDoubleClick={(e) => {
+                if (!(e.target as HTMLElement).closest(".tag")) {
+                  const pos = screenToCanvas(e.clientX, e.clientY);
+                  handleAddTag.mutate({
+                    pageX: Math.floor(pos.x),
+                    pageY: Math.floor(pos.y),
+                  });
+                }
               }}
             >
-              <Layer>
-                <Shape
-                  sceneFunc={(ctx) => {
-                    const spacing = 40;
-                    const range = 5000;
+              <Stage
+                ref={stageRef}
+                width={window.innerWidth}
+                height={window.innerHeight}
+                x={stageState.x}
+                y={stageState.y}
+                scaleX={stageState.scale}
+                scaleY={stageState.scale}
+                draggable
+                onWheel={handleWheel}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  touchAction: "none",
+                }}
+              >
+                <Layer>
+                  <Shape
+                    sceneFunc={(ctx) => {
+                      const spacing = 40;
+                      const range = 5000;
 
-                    const borderColor = getComputedStyle(
-                      document.documentElement
-                    )
-                      .getPropertyValue("--text-color")
-                      .trim();
+                      const borderColor = getComputedStyle(
+                        document.documentElement
+                      )
+                        .getPropertyValue("--text-color")
+                        .trim();
 
-                    ctx.fillStyle = borderColor;
+                      ctx.fillStyle = borderColor;
 
-                    for (let x = -range; x <= range; x += spacing) {
-                      for (let y = -range; y <= range; y += spacing) {
-                        ctx.fillRect(x, y, 1, 1);
+                      for (let x = -range; x <= range; x += spacing) {
+                        for (let y = -range; y <= range; y += spacing) {
+                          ctx.fillRect(x, y, 1, 1);
+                        }
                       }
-                    }
-                  }}
-                />
-                {deskTags.map((tag) =>
-                  tag.id === activeNote.id ? (
-                    <ActiveTag key={tag.id} tag={activeNote} />
-                  ) : (
-                    <Tag
-                      key={tag.id}
-                      tag={tag}
-                      onFocusChange={handleChangeFocus}
-                      onDragEnd={moveTag}
-                    />
-                  )
-                )}
-              </Layer>
-            </Stage>
-          </div>
-        )}
-      </div>
-    </>
-  );
+                    }}
+                  />
+                  {deskTags.map((tag) =>
+                    tag.id === activeNote.id ? (
+                      <ActiveTag key={tag.id} tag={activeNote} />
+                    ) : (
+                      <Tag
+                        key={tag.id}
+                        tag={tag}
+                        onFocusChange={handleChangeFocus}
+                        onDragEnd={moveTag}
+                      />
+                    )
+                  )}
+                </Layer>
+              </Stage>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
 }
 
 export default Desk;
