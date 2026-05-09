@@ -23,7 +23,7 @@ function Tag({
   const { sendSocketMessage } = useContext(SocketContext);
 
   const handleDragEnd = (e) => {
-    e.stopPropagation();
+    e.cancelBubble = true;
 
     const newX = e.target.x();
     const newY = e.target.y();

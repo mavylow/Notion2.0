@@ -48,6 +48,8 @@ function Desk() {
   const [lastDist, setLastDist] = useState(0);
   const [dragStopped, setDragStopped] = useState(false);
 
+  const [isZooming, setIsZooming] = useState(false);
+
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
@@ -489,23 +491,17 @@ function Desk() {
   const handleTouchMove = useCallback(
     (e) => {
       const stage = stageRef.current;
-
       if (!stage) return;
 
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
 
-      if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
-        stage.startDrag();
-        setDragStopped(false);
-      }
-
       if (touch1 && touch2) {
         e.evt.preventDefault();
+        setIsZooming(true);
 
         if (stage.isDragging()) {
           stage.stopDrag();
-          setDragStopped(true);
         }
 
         const rect = stage.container().getBoundingClientRect();
@@ -525,10 +521,11 @@ function Desk() {
 
         if (!lastCenter) {
           setLastCenter(newCenter);
+          setLastDist(dist);
           return;
         }
 
-        if (!lastDist) {
+        if (lastDist === 0) {
           setLastDist(dist);
           return;
         }
@@ -538,35 +535,46 @@ function Desk() {
           y: (newCenter.y - stageState.y) / stageState.scale,
         };
 
-        const scale = stageState.scale * (dist / lastDist);
+        const scaleFactor = dist / lastDist;
+        const newScale = Math.max(
+          0.1,
+          Math.min(10, stageState.scale * scaleFactor)
+        );
 
         const dx = newCenter.x - lastCenter.x;
         const dy = newCenter.y - lastCenter.y;
 
         setStageState({
-          scale,
-          x: newCenter.x - pointTo.x * scale + dx,
-          y: newCenter.y - pointTo.y * scale + dy,
+          scale: newScale,
+          x: newCenter.x - pointTo.x * newScale + dx,
+          y: newCenter.y - pointTo.y * newScale + dy,
         });
 
         setLastDist(dist);
         setLastCenter(newCenter);
+      } else if (touch1 && !touch2) {
+        setIsZooming(false);
+        setLastCenter(null);
+        setLastDist(0);
       }
     },
-    [dragStopped, lastCenter, lastDist, stageState]
+    [lastCenter, lastDist, stageState]
   );
 
   const handleTouchEnd = () => {
     setLastDist(0);
     setLastCenter(null);
+    setIsZooming(false);
   };
 
   const handleDragEnd = (e) => {
-    setStageState((prev) => ({
-      ...prev,
-      x: e.target.x(),
-      y: e.target.y(),
-    }));
+    if (!isZooming) {
+      setStageState((prev) => ({
+        ...prev,
+        x: e.target.x(),
+        y: e.target.y(),
+      }));
+    }
   };
 
   return (
