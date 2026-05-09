@@ -35,7 +35,7 @@ function Desk() {
 
   const [deskId, setDeskId] = useState(null);
   const [tags, setTags] = useState([]);
-  const [isMobile, setIsMobile] = useState(false);
+
   const [stageSize, setStageSize] = useState({ width: 2000, height: 2000 });
 
   const [stageState, setStageState] = useState({
@@ -43,6 +43,10 @@ function Desk() {
     y: 0,
     scale: 1,
   });
+
+  const [lastCenter, setLastCenter] = useState(null);
+  const [lastDist, setLastDist] = useState(0);
+  const [dragStopped, setDragStopped] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
@@ -64,28 +68,6 @@ function Desk() {
   const deskContainerRef = useRef(null);
 
   const scaleBy = 1.05;
-
-  // useEffect(() => {
-  //   const checkMobile = () => {
-  //     const mobile = window.innerWidth < 768;
-
-  //     setIsMobile(mobile);
-
-  //     if (mobile) {
-  //       setIsExpanded(false);
-  //     }
-
-  //     if (deskContainerRef.current) {
-  //       setStageSize({
-  //         width: deskContainerRef.current.clientWidth,
-  //         height: deskContainerRef.current.clientHeight,
-  //       });
-  //     }
-  //   };
-  //   checkMobile();
-  //   window.addEventListener("resize", checkMobile);
-  //   return () => window.removeEventListener("resize", checkMobile);
-  // }, []);
 
   const handleWheel = useCallback((e) => {
     e.evt.preventDefault();
@@ -230,8 +212,8 @@ function Desk() {
         desk: true,
         x: pageX,
         y: pageY,
-        height: isMobile ? 200 : 160,
-        width: isMobile ? window.innerWidth - 40 : 220,
+        height: 160,
+        width: 220,
         deskId: deskId,
         createdAt: Date.now(),
       };
@@ -399,10 +381,6 @@ function Desk() {
         isActive: tag.id === id,
       }))
     );
-
-    if (isMobile) {
-      setIsExpanded(false);
-    }
   };
 
   useEffect(() => {
@@ -495,6 +473,102 @@ function Desk() {
     return transform.point({ x, y });
   }, []);
 
+  const handleTouchMove = useCallback(
+    (e) => {
+      const stage = stageRef.current;
+
+      if (!stage) return;
+
+      const touch1 = e.evt.touches[0];
+      const touch2 = e.evt.touches[1];
+
+      if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
+        stage.startDrag();
+        setDragStopped(false);
+      }
+
+      if (touch1 && touch2) {
+        e.evt.preventDefault();
+
+        if (stage.isDragging()) {
+          stage.stopDrag();
+          setDragStopped(true);
+        }
+
+        const rect = stage.container().getBoundingClientRect();
+
+        const p1 = {
+          x: touch1.clientX - rect.left,
+          y: touch1.clientY - rect.top,
+        };
+
+        const p2 = {
+          x: touch2.clientX - rect.left,
+          y: touch2.clientY - rect.top,
+        };
+
+        const newCenter = getCenter(p1, p2);
+        const dist = getDistance(p1, p2);
+
+        if (!lastCenter) {
+          setLastCenter(newCenter);
+          return;
+        }
+
+        if (!lastDist) {
+          setLastDist(dist);
+          return;
+        }
+
+        const pointTo = {
+          x: (newCenter.x - stageState.x) / stageState.scale,
+          y: (newCenter.y - stageState.y) / stageState.scale,
+        };
+
+        const scale = stageState.scale * (dist / lastDist);
+
+        const dx = newCenter.x - lastCenter.x;
+        const dy = newCenter.y - lastCenter.y;
+
+        setStageState({
+          scale,
+          x: newCenter.x - pointTo.x * scale + dx,
+          y: newCenter.y - pointTo.y * scale + dy,
+        });
+
+        setLastDist(dist);
+        setLastCenter(newCenter);
+      }
+    },
+    [dragStopped, lastCenter, lastDist, stageState]
+  );
+
+  const handleTouchEnd = () => {
+    setLastDist(0);
+    setLastCenter(null);
+  };
+
+  const handleDragEnd = (e) => {
+    setStageState((prev) => ({
+      ...prev,
+      x: e.target.x(),
+      y: e.target.y(),
+    }));
+  };
+
+  const getDistance = (p1, p2) => {
+    return Math.sqrt(
+      (p2.x - p1.x) * (p2.x - p1.x) + (p2.y - p1.y) * (p2.y - p1.y)
+    );
+  };
+
+  const getCenter = (p1, p2) => {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2,
+    };
+  };
+
   return (
     <>
       <div className={`side-container ${isExpanded ? "open" : ""}`}>
@@ -566,6 +640,9 @@ function Desk() {
               scaleX={stageState.scale}
               scaleY={stageState.scale}
               onWheel={handleWheel}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onDragEnd={handleDragEnd}
               draggable
             >
               <Layer>
