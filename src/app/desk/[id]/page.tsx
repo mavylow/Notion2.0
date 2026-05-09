@@ -555,6 +555,7 @@ function Desk() {
     setLastCenter(null);
     setIsZooming(false);
   };
+
   const handleDragEnd = (e) => {
     if (!isZooming) {
       setStageState((prev) => ({
@@ -563,126 +564,127 @@ function Desk() {
         y: e.target.y(),
       }));
     }
+  };
 
-    return (
-      <>
-        <div className={`side-container ${isExpanded ? "open" : ""}`}>
-          <div className="actions-desk">
-            <Button
-              type="button"
-              onButtonClick={backToDesks}
-              Icon={ArrowLeftIcon}
-            />
-            <Button
-              type="button"
-              onButtonClick={handleExpand}
-              Icon={HamburgerMenuIcon}
-            />
-          </div>
-
-          {isExpanded && (
-            <aside className="desk-aside">
-              {isNotesLoading ? (
-                <div className="loading-state">Loading...</div>
-              ) : (
-                <>
-                  {tags?.length > 0 ? (
-                    tags.map((tag) => (
-                      <Preview
-                        key={tag.id}
-                        id={tag.id}
-                        {...tag}
-                        onDelete={(id) => handleDeleteNote.mutate(id)}
-                        onClick={(id, desk) => handleNotePreviewClick(id, desk)}
-                        onDoubleClick={() => console.log("double click")}
-                        type="note"
-                      />
-                    ))
-                  ) : (
-                    <div className="empty-state">Заметки не найдены</div>
-                  )}
-                </>
-              )}
-            </aside>
-          )}
+  return (
+    <>
+      <div className={`side-container ${isExpanded ? "open" : ""}`}>
+        <div className="actions-desk">
+          <Button
+            type="button"
+            onButtonClick={backToDesks}
+            Icon={ArrowLeftIcon}
+          />
+          <Button
+            type="button"
+            onButtonClick={handleExpand}
+            Icon={HamburgerMenuIcon}
+          />
         </div>
-        <div className="desk-container" ref={deskContainerRef}>
-          {isNoteFullScreen ? (
-            <NotePreview
-              tag={activeNote}
-              onBackButtonClick={handleGoBackToDesk}
-            />
-          ) : (
-            <div
-              className="desk"
-              id="desk"
-              onDoubleClick={(e) => {
-                if (!(e.target as HTMLElement).closest(".tag")) {
-                  const pos = screenToCanvas(e.clientX, e.clientY);
-                  handleAddTag.mutate({
-                    pageX: Math.floor(pos.x),
-                    pageY: Math.floor(pos.y),
-                  });
-                }
+
+        {isExpanded && (
+          <aside className="desk-aside">
+            {isNotesLoading ? (
+              <div className="loading-state">Loading...</div>
+            ) : (
+              <>
+                {tags?.length > 0 ? (
+                  tags.map((tag) => (
+                    <Preview
+                      key={tag.id}
+                      id={tag.id}
+                      {...tag}
+                      onDelete={(id) => handleDeleteNote.mutate(id)}
+                      onClick={(id, desk) => handleNotePreviewClick(id, desk)}
+                      onDoubleClick={() => console.log("double click")}
+                      type="note"
+                    />
+                  ))
+                ) : (
+                  <div className="empty-state">Заметки не найдены</div>
+                )}
+              </>
+            )}
+          </aside>
+        )}
+      </div>
+      <div className="desk-container" ref={deskContainerRef}>
+        {isNoteFullScreen ? (
+          <NotePreview
+            tag={activeNote}
+            onBackButtonClick={handleGoBackToDesk}
+          />
+        ) : (
+          <div
+            className="desk"
+            id="desk"
+            onDoubleClick={(e) => {
+              if (!(e.target as HTMLElement).closest(".tag")) {
+                const pos = screenToCanvas(e.clientX, e.clientY);
+                handleAddTag.mutate({
+                  pageX: Math.floor(pos.x),
+                  pageY: Math.floor(pos.y),
+                });
+              }
+            }}
+          >
+            <Stage
+              ref={stageRef}
+              width={window.innerWidth}
+              height={window.innerHeight}
+              x={stageState.x}
+              y={stageState.y}
+              scaleX={stageState.scale}
+              scaleY={stageState.scale}
+              draggable
+              onWheel={handleWheel}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onDragEnd={handleDragEnd}
+              style={{
+                touchAction: "none",
               }}
             >
-              <Stage
-                ref={stageRef}
-                width={window.innerWidth}
-                height={window.innerHeight}
-                x={stageState.x}
-                y={stageState.y}
-                scaleX={stageState.scale}
-                scaleY={stageState.scale}
-                draggable
-                onWheel={handleWheel}
-                onTouchMove={handleTouchMove}
-                onTouchEnd={handleTouchEnd}
-                style={{
-                  touchAction: "none",
-                }}
-              >
-                <Layer>
-                  <Shape
-                    sceneFunc={(ctx) => {
-                      const spacing = 40;
-                      const range = 5000;
+              <Layer>
+                <Shape
+                  sceneFunc={(ctx) => {
+                    const spacing = 40;
+                    const range = 5000;
 
-                      const borderColor = getComputedStyle(
-                        document.documentElement
-                      )
-                        .getPropertyValue("--text-color")
-                        .trim();
-
-                      ctx.fillStyle = borderColor;
-
-                      for (let x = -range; x <= range; x += spacing) {
-                        for (let y = -range; y <= range; y += spacing) {
-                          ctx.fillRect(x, y, 1, 1);
-                        }
-                      }
-                    }}
-                  />
-                  {deskTags.map((tag) =>
-                    tag.id === activeNote.id ? (
-                      <ActiveTag key={tag.id} tag={activeNote} />
-                    ) : (
-                      <Tag
-                        key={tag.id}
-                        tag={tag}
-                        onFocusChange={handleChangeFocus}
-                        onDragEnd={moveTag}
-                      />
+                    const borderColor = getComputedStyle(
+                      document.documentElement
                     )
-                  )}
-                </Layer>
-              </Stage>
-            </div>
-          )}
-        </div>
-      </>
-    );
-  };
+                      .getPropertyValue("--text-color")
+                      .trim();
+
+                    ctx.fillStyle = borderColor;
+
+                    for (let x = -range; x <= range; x += spacing) {
+                      for (let y = -range; y <= range; y += spacing) {
+                        ctx.fillRect(x, y, 1, 1);
+                      }
+                    }
+                  }}
+                />
+                {deskTags.map((tag) =>
+                  tag.id === activeNote.id ? (
+                    <ActiveTag key={tag.id} tag={activeNote} />
+                  ) : (
+                    <Tag
+                      key={tag.id}
+                      tag={tag}
+                      onFocusChange={handleChangeFocus}
+                      onDragEnd={moveTag}
+                    />
+                  )
+                )}
+              </Layer>
+            </Stage>
+          </div>
+        )}
+      </div>
+    </>
+  );
 }
 
 export default Desk;
