@@ -23,6 +23,11 @@
   height: calc(100vh - var(--header-height) - var(--footer-height));
   overflow: hidden;
   background: var(--background-root);
+  touch-action: none;
+}
+
+.desk {
+  touch-action: none;
 }
 
 /* ===== SIDEBAR ===== */

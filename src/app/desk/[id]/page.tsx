@@ -483,7 +483,9 @@ function Desk() {
       e.evt.preventDefault();
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
-      const stage = e.target.getStage();
+      const stage = stageRef.current;
+
+      if (!stage) return;
 
       // we need to restore dragging, if it was cancelled by multi-touch
       if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
@@ -530,15 +532,20 @@ function Desk() {
 
         const scale = stageScale.x * (dist / lastDist);
 
-        setStageScale({ x: scale, y: scale });
-
         const dx = newCenter.x - lastCenter.x;
         const dy = newCenter.y - lastCenter.y;
 
-        setStagePos({
+        const newPos = {
           x: newCenter.x - pointTo.x * scale + dx,
           y: newCenter.y - pointTo.y * scale + dy,
-        });
+        };
+
+        stage.scale({ x: scale, y: scale });
+        stage.position(newPos);
+        stage.batchDraw();
+
+        setStageScale({ x: scale, y: scale });
+        setStagePos(newPos);
 
         setLastDist(dist);
         setLastCenter(newCenter);
