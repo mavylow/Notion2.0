@@ -38,8 +38,9 @@ function Desk() {
 
   const [stagePos, setStagePos] = useState({ x: 0, y: 0 });
   const [stageScale, setStageScale] = useState({ x: 1, y: 1 });
-  const [lastCenter, setLastCenter] = useState(null);
-  const [lastDist, setLastDist] = useState(0);
+
+  const lastCenterRef = useRef(null);
+  const lastDistRef = useRef(0);
   const [dragStopped, setDragStopped] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -483,19 +484,18 @@ function Desk() {
       e.evt.preventDefault();
       const touch1 = e.evt.touches[0];
       const touch2 = e.evt.touches[1];
-      const stage = stageRef.current;
+      const stage = e.target.getStage();
 
       if (!stage) return;
 
-      // we need to restore dragging, if it was cancelled by multi-touch
+      // ✅ Восстанавливаем drag если он был отменён
       if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
         stage.startDrag();
         setDragStopped(false);
       }
 
+      // ✅ Multi-touch zoom
       if (touch1 && touch2) {
-        // if the stage was under Konva's drag&drop
-        // we need to stop it, and implement our own pan logic with two pointers
         if (stage.isDragging()) {
           stage.stopDrag();
           setDragStopped(true);
@@ -512,51 +512,58 @@ function Desk() {
           y: touch2.clientY - rect.top,
         };
 
-        if (!lastCenter) {
-          setLastCenter(getCenter(p1, p2));
+        // ✅ Первый touch - инициализируем
+        if (!lastCenterRef.current) {
+          lastCenterRef.current = getCenter(p1, p2);
           return;
         }
-        const newCenter = getCenter(p1, p2);
 
+        const newCenter = getCenter(p1, p2);
         const dist = getDistance(p1, p2);
 
-        if (!lastDist) {
-          setLastDist(dist);
+        // ✅ Второй touch - инициализируем расстояние
+        if (lastDistRef.current === 0) {
+          lastDistRef.current = dist;
           return;
         }
 
+        // ✅ Вычисляем новый scale
         const pointTo = {
-          x: (newCenter.x - stagePos.x) / stageScale.x,
-          y: (newCenter.y - stagePos.y) / stageScale.x,
+          x: (newCenter.x - stage.x()) / stage.scaleX(),
+          y: (newCenter.y - stage.y()) / stage.scaleX(),
         };
 
-        const scale = stageScale.x * (dist / lastDist);
+        const scale = stage.scaleX() * (dist / lastDistRef.current);
 
-        const dx = newCenter.x - lastCenter.x;
-        const dy = newCenter.y - lastCenter.y;
+        // ✅ Ограничиваем scale
+        const newScale = Math.max(0.1, Math.min(10, scale));
 
-        const newPos = {
-          x: newCenter.x - pointTo.x * scale + dx,
-          y: newCenter.y - pointTo.y * scale + dy,
-        };
+        stage.scale({ x: newScale, y: newScale });
 
-        stage.scale({ x: scale, y: scale });
-        stage.position(newPos);
+        const dx = newCenter.x - lastCenterRef.current.x;
+        const dy = newCenter.y - lastCenterRef.current.y;
+
+        stage.position({
+          x: newCenter.x - pointTo.x * newScale + dx,
+          y: newCenter.y - pointTo.y * newScale + dy,
+        });
+
         stage.batchDraw();
 
-        setStageScale({ x: scale, y: scale });
-        setStagePos(newPos);
+        // ✅ Обновляем state один раз в конце
+        setStagePos({ x: stage.x(), y: stage.y() });
+        setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
 
-        setLastDist(dist);
-        setLastCenter(newCenter);
+        lastDistRef.current = dist;
+        lastCenterRef.current = newCenter;
       }
     },
-    [dragStopped, lastCenter, lastDist, stagePos, stageScale]
+    [dragStopped]
   );
 
   const handleTouchEnd = () => {
-    setLastDist(0);
-    setLastCenter(null);
+    lastDistRef.current = 0;
+    lastCenterRef.current = null;
   };
 
   const handleDragEnd = (e) => {
@@ -640,6 +647,9 @@ function Desk() {
               onTouchEnd={handleTouchEnd}
               onDragEnd={handleDragEnd}
               draggable
+              style={{
+                touchAction: "none",
+              }}
             >
               <Layer>
                 <Shape
