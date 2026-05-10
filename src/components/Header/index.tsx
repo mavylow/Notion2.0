@@ -37,7 +37,11 @@ function Header() {
     if (
       location === "/signin" ||
       location === "/signup" ||
-      !(location === "/" || location === "/profile")
+      !(
+        location === "/" ||
+        location === "/profile" ||
+        location.includes("desk")
+      )
     ) {
       setIsPageAuth(true);
     } else {

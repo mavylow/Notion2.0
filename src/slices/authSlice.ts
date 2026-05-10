@@ -104,23 +104,26 @@ export const signUp = createAsyncThunk(
   "auth/signup",
   async (form: IForm, { dispatch, rejectWithValue }) => {
     try {
-      const response = await signUpUser(
+      const { token, user } = await signUpUser(
         JSON.stringify({
           email: DOMPurify.sanitize(form.email),
           password: DOMPurify.sanitize(form.password),
         })
       );
 
-      if (response.message) {
-        dispatch(
-          modalSlice.actions.setModal({
-            message: response.message,
-            status: response.status || "info",
-          })
-        );
+      if (!user || !token) {
+        throw new Error("Signup failed");
       }
 
-      return response;
+      dispatch(
+        modalSlice.actions.setModal({
+          message: "signUpStatus.success",
+          status: "success",
+        })
+      );
+
+      StorageUtil.set("token", token);
+      return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Signup failed";
 
@@ -191,8 +194,9 @@ export const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(signUp.fulfilled, (state) => {
+      .addCase(signUp.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.user = action.payload;
       })
       .addCase(signUp.rejected, (state, action) => {
         state.isLoading = false;

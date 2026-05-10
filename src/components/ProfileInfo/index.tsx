@@ -109,7 +109,7 @@ const ProfileInfo = observer(() => {
                   width={64}
                 />
                 <h3>
-                  {user?.firstName || user.username} {user?.secondName}
+                  {user?.firstName || user?.username} {user?.secondName}
                 </h3>
                 <p> {t("changeProfilePhoto")}</p>
               </label>

@@ -30,3 +30,7 @@
   fill: none;
   stroke: var(--svg-color);
 }
+
+.svg-sidekick {
+  height: 30px;
+}
