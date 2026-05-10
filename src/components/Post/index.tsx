@@ -148,7 +148,7 @@ function Post({ post, onLike }: PostProps) {
         <WithoutComment>
           <PostHeader>
             <PostAvatar
-              src={author?.profileImage}
+              src={author.profileImage || "/assets/default.png"}
               alt={`Profile picture of ${author?.username}`}
               className="post-avatar"
               loading="lazy"

@@ -1,8 +1,8 @@
 import pool from "@/db/db";
 import { startSession } from "@/utils/session";
 import { NextRequest, NextResponse } from "next/server";
-
-const bcrypt = require("bcrypt");
+import bcrypt from "bcrypt";
+import { redirect } from "next/navigation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const insertUserQuery = `
-      INSERT INTO users (email, password, username, creationdate)
+      INSERT INTO users (email, password, username, "creationDate")
       VALUES ($1, $2, $3, $4)
-      RETURNING id, email, username, creationdate
+      RETURNING id, email, username, "creationDate"
     `;
 
     const result = await pool.query(insertUserQuery, [
@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
     const responseUser = {
       id: newUser.id,
       email: newUser.email,
-      name: newUser.name,
-      createdAt: newUser.createdAt,
+      name: newUser.username,
+      createdAt: newUser.creationDate,
     };
 
     const res = NextResponse.json({

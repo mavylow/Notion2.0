@@ -61,6 +61,7 @@ function Tag({
               pointerEvents: "none",
               width: `${tag.width}px`,
               height: `${tag.height}px`,
+              cursor: "pointer",
             },
           }}
         >

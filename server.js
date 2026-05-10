@@ -13,7 +13,6 @@ app.prepare().then(() => {
     handler(req, res);
   });
 
-  // ✅ КРИТИЧНО - правильная конфигурация CORS для Railway
   const io = new Server(httpServer, {
     cors: {
       origin: [

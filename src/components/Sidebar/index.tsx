@@ -21,7 +21,7 @@ export default function Sidebar() {
   });
 
   return (
-    <aside>
+    <aside className="main-aside">
       <FrameWrapper>
         <section className="suggested-people">
           <h3>Suggested people</h3>

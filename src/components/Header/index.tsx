@@ -128,7 +128,7 @@ function Header() {
                   <>
                     <Link href={"/profile"}>
                       <Image
-                        src={user.profileImage}
+                        src={user?.profileImage || "/assets/default.png"}
                         alt="profile-image"
                         height={24}
                         width={24}
@@ -166,7 +166,7 @@ function Header() {
           >
             {user && isExpanded ? (
               <Image
-                src={user?.profileImage || "/image/default-avatar.webp"}
+                src={user?.profileImage || "/assets/default.png"}
                 alt="Hide menu profile image"
                 height={24}
                 width={24}

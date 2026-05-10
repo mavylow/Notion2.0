@@ -33,6 +33,9 @@ import {
 } from "react-konva";
 import Tag from "@/components/Tag";
 import ActiveTag from "@/components/ActiveTag";
+import ZoomInIcon from "@/assets/ZoomInIcon";
+import ZoomOutIcon from "@/assets/ZoomOutIcon";
+import MaximizeIcon from "@/assets/MaximizeIcon";
 
 function Desk() {
   const { id } = useParams();
@@ -573,6 +576,32 @@ function Desk() {
     setStagePos({ x: stage.x(), y: stage.y() });
   };
 
+  const handleZoom = useCallback((direction: "in" | "out") => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    const newScale = Math.max(
+      0.1,
+      Math.min(10, direction === "in" ? oldScale * scaleBy : oldScale / scaleBy)
+    );
+
+    stage.scale({ x: newScale, y: newScale });
+    stage.position({
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    });
+
+    setStagePos({ x: stage.x(), y: stage.y() });
+    setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
+  }, []);
+
   return (
     <>
       <div className={`side-container ${isExpanded ? "open" : ""}`}>
@@ -586,6 +615,21 @@ function Desk() {
             type="button"
             onButtonClick={handleExpand}
             Icon={HamburgerMenuIcon}
+          />
+          <Button
+            type="button"
+            onButtonClick={() => handleZoom("in")}
+            Icon={ZoomInIcon}
+          />
+          <Button
+            type="button"
+            onButtonClick={() => handleZoom("out")}
+            Icon={ZoomOutIcon}
+          />
+          <Button
+            type="button"
+            onButtonClick={() => setStageScale({ x: 1, y: 1 })}
+            Icon={MaximizeIcon}
           />
         </div>
 
@@ -647,7 +691,7 @@ function Desk() {
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onDragEnd={handleDragEnd}
-              draggable
+              draggable={true}
               style={{
                 touchAction: "none",
               }}

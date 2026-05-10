@@ -34,6 +34,8 @@ function Preview({
   type,
 }: PreviewProps) {
   const date = type === "note" ? createdAt : creationDate;
+
+  console.log("render", id);
   const formattedDate = date ? new Date(date).toLocaleString() : "";
 
   const formattedTitle = (h1) => {

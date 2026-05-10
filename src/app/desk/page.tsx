@@ -1,7 +1,7 @@
 "use client";
 
-import { AuthContext } from "@/providers/AuthProvider";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { AuthContext, IAuthContext } from "@/providers/AuthProvider";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useRef, useState } from "react";
 import "@app/desk/style.css";
 import { IDesk } from "@/interfaces";
@@ -17,46 +17,35 @@ import CircularProgress from "@mui/material/CircularProgress";
 function DeskList() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { user } = useContext(AuthContext);
-
+  const { user } = useContext<IAuthContext>(AuthContext);
+  const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(true);
-  const tagRef = useRef(null);
 
-  const {
-    data: desks,
-    refetch: refetchDesks,
-    isLoading,
-  } = useQuery({
+  const { data: desks = [], isLoading } = useQuery({
     queryKey: ["desks", user?.id],
     queryFn: async () => {
       const result = await getDesks();
-      console.log(result);
       return result;
     },
-    enabled: !!user?.id,
+    staleTime: 0,
+    gcTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    console.log("mounted");
-  }, [desks]);
-
   const addDesk = useMutation({
-    mutationKey: ["desks", user?.id],
     mutationFn: async (desk: IDesk) => {
       await createDesk(desk);
     },
     onSuccess: () => {
-      refetchDesks();
+      queryClient.invalidateQueries({ queryKey: ["desks", user?.id] });
     },
   });
 
   const deleteDesk = useMutation({
-    mutationKey: ["desks", user?.id],
     mutationFn: async (id: number) => {
       await deleteDeskById(id);
     },
     onSuccess: () => {
-      refetchDesks();
+      queryClient.invalidateQueries({ queryKey: ["desks", user?.id] });
     },
   });
 
@@ -75,7 +64,7 @@ function DeskList() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return <CircularProgress aria-label="Loading…" />;
   }
 
@@ -92,9 +81,10 @@ function DeskList() {
           {isExpanded && <CreateDesk onAdd={(desk) => handleAddDesk(desk)} />}
         </div>
 
-        {isExpanded && (
+        {isExpanded && desks && desks.length > 0 && (
           <aside className="desk-aside-">
-            {desks?.map((desk) => {
+            {desks.map((desk) => {
+              console.log("Rendering desk:", desk);
               return (
                 <Preview
                   key={desk.id}
@@ -107,10 +97,12 @@ function DeskList() {
             })}
           </aside>
         )}
-      </div>
 
-      <div className="desk" ref={tagRef}>
-        <div className="notification">Select desk</div>
+        {isExpanded && desks.length === 0 && (
+          <aside className="desk-aside-">
+            <p>{t("noDesks")}</p>
+          </aside>
+        )}
       </div>
     </div>
   );

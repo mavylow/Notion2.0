@@ -15,8 +15,6 @@
   --z-sidebar: 1000;
 }
 
-/* ===== LAYOUT ===== */
-
 .desk-container {
   position: relative;
   width: 100vw;
@@ -28,9 +26,8 @@
 
 .desk {
   touch-action: none;
+  cursor: move;
 }
-
-/* ===== SIDEBAR ===== */
 
 .side-container {
   position: fixed;
@@ -75,8 +72,6 @@
   height: 44px;
   cursor: pointer;
 }
-
-/* ===== NOTES LIST ===== */
 
 .desk-aside {
   flex: 1;

@@ -4,7 +4,13 @@ const getFromStorage = (key: string, defaultValue: any = null) => {
   }
   try {
     const item = localStorage.getItem(key);
-    return item ? item : defaultValue;
+    if (!item) return defaultValue;
+
+    try {
+      return JSON.parse(item);
+    } catch {
+      return item;
+    }
   } catch (error) {
     console.error(`Error reading from localStorage:`, error);
     return defaultValue;
@@ -16,7 +22,11 @@ const setToStorage = (key: string, value: any) => {
     return;
   }
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    if (typeof value === "string" && value.includes(".")) {
+      localStorage.setItem(key, value);
+    } else {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
   } catch (error) {
     console.error(`Error writing to localStorage:`, error);
   }

@@ -10,21 +10,6 @@ function ProfileNav() {
   const { t } = useTranslation();
   const { profilePage, changePage } = useProfilePage((state) => state);
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-
-    const savedPage = StorageUtil.get("profile");
-    if (savedPage) {
-      changePage(savedPage);
-    }
-  }, [changePage, mounted]);
-
   return (
     <nav>
       <a

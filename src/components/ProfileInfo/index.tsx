@@ -50,7 +50,7 @@ const ProfileInfo = observer(() => {
 
   const initialValues = useMemo(
     () => ({
-      image: user?.profileImage || "/default-avatar.jpg",
+      image: user?.profileImage || "/assets/default.png",
       username: user?.username || "",
       email: user?.email || "",
       description: user?.description || "",
@@ -109,7 +109,7 @@ const ProfileInfo = observer(() => {
                   width={64}
                 />
                 <h3>
-                  {user?.firstName} {user?.secondName}
+                  {user?.firstName || user.username} {user?.secondName}
                 </h3>
                 <p> {t("changeProfilePhoto")}</p>
               </label>

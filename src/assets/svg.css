@@ -13,7 +13,10 @@
   fill: var(--svg-color);
 }
 
-.svg-comment path {
+.svg-comment path,
+.svg-zoom-in path,
+.svg-zoom-out path,
+.svg-maximize path {
   stroke: var(--svg-color);
 }
 
