@@ -64,42 +64,42 @@ function Desk() {
 
   const scaleBy = 1.05;
 
-  const handleWheel = useCallback((e) => {
-    e.evt.preventDefault();
-    const stage = stageRef.current;
-    if (!stage) return;
+  // const handleWheel = useCallback((e) => {
+  //   e.evt.preventDefault();
+  //   const stage = stageRef.current;
+  //   if (!stage) return;
 
-    const oldScale = stage.scaleX();
-    const pointer = stage.getPointerPosition();
-    const mousePointTo = {
-      x: (pointer.x - stage.x()) / oldScale,
-      y: (pointer.y - stage.y()) / oldScale,
-    };
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
-    const newScale = Math.max(
-      0.1,
-      Math.min(10, direction > 0 ? oldScale * scaleBy : oldScale / scaleBy)
-    );
+  //   const oldScale = stage.scaleX();
+  //   const pointer = stage.getPointerPosition();
+  //   const mousePointTo = {
+  //     x: (pointer.x - stage.x()) / oldScale,
+  //     y: (pointer.y - stage.y()) / oldScale,
+  //   };
+  //   const direction = e.evt.deltaY > 0 ? -1 : 1;
+  //   const newScale = Math.max(
+  //     0.1,
+  //     Math.min(10, direction > 0 ? oldScale * scaleBy : oldScale / scaleBy)
+  //   );
 
-    stage.scale({ x: newScale, y: newScale });
-    stage.position({
-      x: pointer.x - mousePointTo.x * newScale,
-      y: pointer.y - mousePointTo.y * newScale,
-    });
+  //   stage.scale({ x: newScale, y: newScale });
+  //   stage.position({
+  //     x: pointer.x - mousePointTo.x * newScale,
+  //     y: pointer.y - mousePointTo.y * newScale,
+  //   });
 
-    setStagePos({ x: stage.x(), y: stage.y() });
-    setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
-  }, []);
+  //   setStagePos({ x: stage.x(), y: stage.y() });
+  //   setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
+  // }, []);
 
-  useEffect(() => {
-    activeNoteRef.current = activeNote;
-  }, [activeNote]);
+  // useEffect(() => {
+  //   activeNoteRef.current = activeNote;
+  // }, [activeNote]);
 
-  useEffect(() => {
-    if (deskId && isConnected && user) {
-      sendSocketMessage("join desk", { deskId, username: user.username });
-    }
-  }, [isConnected, deskId, user, sendSocketMessage]);
+  // useEffect(() => {
+  //   if (deskId && isConnected && user) {
+  //     sendSocketMessage("join desk", { deskId, username: user.username });
+  //   }
+  // }, [isConnected, deskId, user, sendSocketMessage]);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -550,7 +550,6 @@ function Desk() {
 
         stage.batchDraw();
 
-        // ✅ Обновляем state один раз в конце
         setStagePos({ x: stage.x(), y: stage.y() });
         setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
 
@@ -642,7 +641,7 @@ function Desk() {
               y={stagePos.y}
               scaleX={stageScale.x}
               scaleY={stageScale.y}
-              onWheel={handleWheel}
+              // onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onDragEnd={handleDragEnd}
