@@ -24,7 +24,13 @@ import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
 import Preview from "@/components/Preview";
 import { SocketContext } from "@/providers/SocketProvider";
-import { Stage, Layer, Shape } from "react-konva";
+import {
+  Stage,
+  Layer,
+  Shape,
+  KonvaNodeEvents,
+  KonvaNodeComponent,
+} from "react-konva";
 import Tag from "@/components/Tag";
 import ActiveTag from "@/components/ActiveTag";
 
@@ -64,42 +70,42 @@ function Desk() {
 
   const scaleBy = 1.05;
 
-  // const handleWheel = useCallback((e) => {
-  //   e.evt.preventDefault();
-  //   const stage = stageRef.current;
-  //   if (!stage) return;
+  const handleWheel = useCallback((e) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    if (!stage) return;
 
-  //   const oldScale = stage.scaleX();
-  //   const pointer = stage.getPointerPosition();
-  //   const mousePointTo = {
-  //     x: (pointer.x - stage.x()) / oldScale,
-  //     y: (pointer.y - stage.y()) / oldScale,
-  //   };
-  //   const direction = e.evt.deltaY > 0 ? -1 : 1;
-  //   const newScale = Math.max(
-  //     0.1,
-  //     Math.min(10, direction > 0 ? oldScale * scaleBy : oldScale / scaleBy)
-  //   );
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+    const direction = e.evt.deltaY > 0 ? -1 : 1;
+    const newScale = Math.max(
+      0.1,
+      Math.min(10, direction > 0 ? oldScale * scaleBy : oldScale / scaleBy)
+    );
 
-  //   stage.scale({ x: newScale, y: newScale });
-  //   stage.position({
-  //     x: pointer.x - mousePointTo.x * newScale,
-  //     y: pointer.y - mousePointTo.y * newScale,
-  //   });
+    stage.scale({ x: newScale, y: newScale });
+    stage.position({
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    });
 
-  //   setStagePos({ x: stage.x(), y: stage.y() });
-  //   setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
-  // }, []);
+    setStagePos({ x: stage.x(), y: stage.y() });
+    setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
+  }, []);
 
-  // useEffect(() => {
-  //   activeNoteRef.current = activeNote;
-  // }, [activeNote]);
+  useEffect(() => {
+    activeNoteRef.current = activeNote;
+  }, [activeNote]);
 
-  // useEffect(() => {
-  //   if (deskId && isConnected && user) {
-  //     sendSocketMessage("join desk", { deskId, username: user.username });
-  //   }
-  // }, [isConnected, deskId, user, sendSocketMessage]);
+  useEffect(() => {
+    if (deskId && isConnected && user) {
+      sendSocketMessage("join desk", { deskId, username: user.username });
+    }
+  }, [isConnected, deskId, user, sendSocketMessage]);
 
   useEffect(() => {
     if (!isConnected) return;
@@ -488,13 +494,11 @@ function Desk() {
 
       if (!stage) return;
 
-      // ✅ Восстанавливаем drag если он был отменён
       if (touch1 && !touch2 && !stage.isDragging() && dragStopped) {
         stage.startDrag();
         setDragStopped(false);
       }
 
-      // ✅ Multi-touch zoom
       if (touch1 && touch2) {
         if (stage.isDragging()) {
           stage.stopDrag();
@@ -512,7 +516,6 @@ function Desk() {
           y: touch2.clientY - rect.top,
         };
 
-        // ✅ Первый touch - инициализируем
         if (!lastCenterRef.current) {
           lastCenterRef.current = getCenter(p1, p2);
           return;
@@ -521,21 +524,17 @@ function Desk() {
         const newCenter = getCenter(p1, p2);
         const dist = getDistance(p1, p2);
 
-        // ✅ Второй touch - инициализируем расстояние
         if (lastDistRef.current === 0) {
           lastDistRef.current = dist;
           return;
         }
 
-        // ✅ Вычисляем новый scale
         const pointTo = {
           x: (newCenter.x - stage.x()) / stage.scaleX(),
-          y: (newCenter.y - stage.y()) / stage.scaleX(),
+          y: (newCenter.y - stage.y()) / stage.scaleY(),
         };
 
         const scale = stage.scaleX() * (dist / lastDistRef.current);
-
-        // ✅ Ограничиваем scale
         const newScale = Math.max(0.1, Math.min(10, scale));
 
         stage.scale({ x: newScale, y: newScale });
@@ -548,13 +547,10 @@ function Desk() {
           y: newCenter.y - pointTo.y * newScale + dy,
         });
 
-        stage.batchDraw();
-
-        setStagePos({ x: stage.x(), y: stage.y() });
-        setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
-
         lastDistRef.current = dist;
         lastCenterRef.current = newCenter;
+
+        stage.batchDraw();
       }
     },
     [dragStopped]
@@ -563,6 +559,12 @@ function Desk() {
   const handleTouchEnd = () => {
     lastDistRef.current = 0;
     lastCenterRef.current = null;
+
+    const stage = stageRef.current;
+    if (stage) {
+      setStagePos({ x: stage.x(), y: stage.y() });
+      setStageScale({ x: stage.scaleX(), y: stage.scaleY() });
+    }
   };
 
   const handleDragEnd = (e) => {
@@ -641,7 +643,7 @@ function Desk() {
               y={stagePos.y}
               scaleX={stageScale.x}
               scaleY={stageScale.y}
-              // onWheel={handleWheel}
+              onWheel={handleWheel}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
               onDragEnd={handleDragEnd}
