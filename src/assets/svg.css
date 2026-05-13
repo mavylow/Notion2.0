@@ -31,6 +31,11 @@
   stroke: var(--svg-color);
 }
 
-.svg-sidekick {
-  height: 30px;
+.svg-icon {
+  height: 12px;
+  width: 12px;
+}
+
+.svg-logo {
+  height: clamp(20px, 5vw, 50px);
 }

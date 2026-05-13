@@ -91,7 +91,6 @@ function Header() {
         data-testid="header"
       >
         <div className="logo" onClick={() => handleNavigate("/")}>
-          <SidekickLogo />
           <SidekickLogoText />
         </div>
         {!isPageAuth && (

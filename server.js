@@ -35,7 +35,6 @@ app.prepare().then(() => {
   io.on("connection", (socket) => {
     console.log("✅ User connected:", socket.id);
 
-    // ✅ join desk
     socket.on("join desk", ({ deskId, username }) => {
       socket.join(String(deskId));
       socket.data.deskId = deskId;
@@ -54,7 +53,6 @@ app.prepare().then(() => {
       });
     });
 
-    // ✅ CHANGE - редактирование заметки
     socket.on("CHANGE", ({ id, name, value, deskId }) => {
       console.log(`📝 Note changed: ${id}, ${name}=${value}`);
       socket.to(String(deskId)).emit("CHANGE", {
@@ -64,7 +62,6 @@ app.prepare().then(() => {
       });
     });
 
-    // ✅ ADD - добавление заметки
     socket.on("ADD", (data) => {
       const deskId = String(data.deskId);
       console.log(`➕ Note added: ${data.id} to desk ${deskId}`);
@@ -73,12 +70,10 @@ app.prepare().then(() => {
         roomStates.set(deskId, { notes: [] });
       }
 
-      // Добавляем в состояние
       if (!roomStates.get(deskId).notes.find((n) => n.id === data.id)) {
         roomStates.get(deskId).notes.push(data);
       }
 
-      // ✅ Отправляем всем в комнате, включая отправителя
       io.to(deskId).emit("ADD", data);
     });
 

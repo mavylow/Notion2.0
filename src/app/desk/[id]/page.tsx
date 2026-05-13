@@ -24,13 +24,7 @@ import ArrowLeftIcon from "@/assets/ArrowIcon";
 import { useParams, useRouter } from "next/navigation";
 import Preview from "@/components/Preview";
 import { SocketContext } from "@/providers/SocketProvider";
-import {
-  Stage,
-  Layer,
-  Shape,
-  KonvaNodeEvents,
-  KonvaNodeComponent,
-} from "react-konva";
+import { Stage, Layer, Shape } from "react-konva";
 import Tag from "@/components/Tag";
 import ActiveTag from "@/components/ActiveTag";
 import ZoomInIcon from "@/assets/ZoomInIcon";
@@ -72,6 +66,13 @@ function Desk() {
   const deskContainerRef = useRef(null);
 
   const scaleBy = 1.05;
+
+  useEffect(() => {
+    if (!user) {
+      sessionStorage.setItem("redirectAfterAuth", `/desk/${id}`);
+      router.replace("/signin");
+    }
+  }, [user, id, router]);
 
   const handleWheel = useCallback((e) => {
     e.evt.preventDefault();
