@@ -21,8 +21,8 @@ interface RootLayoutProps {
 }
 
 export const metadata: Metadata = {
-  title: "Sidekick media",
-  description: "Social network from Sidekick",
+  title: "Mavylow media",
+  description: "Social network from Mavylow",
   keywords: ["social", "network", "posts", "community"],
 };
 
