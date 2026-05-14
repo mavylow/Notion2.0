@@ -2,7 +2,7 @@
 
 import { useDispatch } from "react-redux";
 import { noteInputChange } from "@slices/noteSlice";
-import { useContext, useEffect, useMemo, useRef } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SocketContext } from "@/providers/SocketProvider";
 import { socketActions } from "@/utils/config";
 import { ITag } from "@/interfaces";
@@ -14,11 +14,15 @@ import { Group, Rect } from "react-konva";
 
 function ActiveTag({ tag }: { tag: ITag }) {
   const dispatch = useDispatch();
+  const cursorPositionRef = useRef(0);
   const { sendSocketMessage } = useContext(SocketContext);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleChangeInput = (e) => {
     const { name, value } = e.target;
+    const cursorPos = e.target.selectionStart;
+
+    cursorPositionRef.current = cursorPos;
 
     dispatch(noteInputChange({ name, value }));
     sendSocketMessage(socketActions.CHANGE, {
@@ -32,8 +36,13 @@ function ActiveTag({ tag }: { tag: ITag }) {
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.focus();
+
+      textareaRef.current.setSelectionRange(
+        cursorPositionRef.current,
+        cursorPositionRef.current
+      );
     }
-  }, []);
+  }, [tag.title, tag.body]);
 
   const safeHeight = Math.max(Number(tag.height) || 160, 100);
   const safeWidth = Math.max(Number(tag.width) || 220, 100);
