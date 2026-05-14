@@ -48,7 +48,16 @@ export default function SignIn() {
   };
 
   useEffect(() => {
-    if (isAuth) {
+    if (!isAuth) {
+      return;
+    }
+
+    const desk = sessionStorage.getItem("redirectAfterAuth");
+
+    if (desk) {
+      sessionStorage.removeItem("redirectAfterAuth");
+      redirect(desk);
+    } else {
       redirect("/");
     }
   }, [isAuth]);

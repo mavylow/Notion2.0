@@ -62,7 +62,14 @@ function SignUp() {
   });
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+
+    const desk = sessionStorage.getItem("redirectAfterAuth");
+
+    if (desk) {
+      sessionStorage.removeItem("redirectAfterAuth");
+      redirect(desk);
+    } else {
       redirect("/");
     }
   }, [user]);
