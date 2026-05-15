@@ -67,10 +67,10 @@
 }
 .password-icon {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -1px;
+  left: 0px;
   width: 16px;
-  height: 21px;
+  height: 22px;
   display: flex;
   align-items: center;
 }
@@ -81,12 +81,8 @@
   }
 }
 
-input,
-textarea,
-select {
+.sing-up input,
+.sing-up textarea,
+.sing-up select {
   font-size: 16px;
-}
-
-.input-wrapper {
-  transform: scale(0.95);
 }
