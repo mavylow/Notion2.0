@@ -80,3 +80,13 @@
     margin-top: 8px;
   }
 }
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+.input-wrapper {
+  transform: scale(0.95);
+}
