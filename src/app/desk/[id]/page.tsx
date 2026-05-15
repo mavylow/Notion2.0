@@ -70,7 +70,7 @@ function Desk() {
   useEffect(() => {
     if (!user) {
       sessionStorage.setItem("redirectAfterAuth", `/desk/${id}`);
-      router.replace("/signin");
+      router.replace("/signup");
     }
   }, [user, id, router]);
 
