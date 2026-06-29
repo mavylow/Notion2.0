@@ -1,8 +1,9 @@
 import type { IForm, IUser } from "@/interfaces";
-import { loginUser, restoreUser, signUpUser } from "@utils/apiUtil";
+import { loginUser, logoutUser, restoreUser, signUpUser } from "@utils/apiUtil";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { modalSlice } from "@slices/modalSlice";
 import DOMPurify from "dompurify";
+import { StorageUtil } from "@/utils/storageUtil";
 
 interface IAuthState {
   user: IUser | null;
@@ -30,9 +31,7 @@ export const signIn = createAsyncThunk(
       );
 
       if (!user || !token) {
-     
         throw new Error("Invalid credentials");
-        
       }
 
       dispatch(
@@ -42,7 +41,7 @@ export const signIn = createAsyncThunk(
         })
       );
 
-      localStorage.setItem("token", token);
+      StorageUtil.set("token", token);
       return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Authentication failed";
@@ -63,12 +62,6 @@ export const restoreAuth = createAsyncThunk(
   "auth/restoreAuth",
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      const token = localStorage.getItem("token");
-
-      if (!token) {
-        return rejectWithValue("No token found");
-      }
-
       const user = await restoreUser();
 
       if (user) {
@@ -80,7 +73,8 @@ export const restoreAuth = createAsyncThunk(
         );
         return user;
       } else {
-        localStorage.removeItem("token");
+        StorageUtil.remove("token");
+
         dispatch(
           modalSlice.actions.setModal({
             message: "restoreAuthStatus.warning",
@@ -99,7 +93,8 @@ export const restoreAuth = createAsyncThunk(
         })
       );
 
-      localStorage.removeItem("token");
+      StorageUtil.remove("token");
+
       return rejectWithValue("Auth check failed");
     }
   }
@@ -109,29 +104,32 @@ export const signUp = createAsyncThunk(
   "auth/signup",
   async (form: IForm, { dispatch, rejectWithValue }) => {
     try {
-      const response = await signUpUser(
+      const { token, user } = await signUpUser(
         JSON.stringify({
           email: DOMPurify.sanitize(form.email),
           password: DOMPurify.sanitize(form.password),
         })
       );
 
-      if (response.message) {
-        dispatch(
-          modalSlice.actions.setModal({
-            message: response.message,
-            status: response.status || "info",
-          })
-        );
+      if (!user || !token) {
+        throw new Error("Signup failed");
       }
 
-      return response;
+      dispatch(
+        modalSlice.actions.setModal({
+          message: "signUpStatus.success",
+          status: "success",
+        })
+      );
+
+      StorageUtil.set("token", token);
+      return user;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Signup failed";
 
       dispatch(
         modalSlice.actions.setModal({
-         message: "signUpStatus.error",
+          message: "signUpStatus.error",
           status: "error",
         })
       );
@@ -144,7 +142,7 @@ export const signUp = createAsyncThunk(
 export const logOut = createAsyncThunk(
   "auth/logout",
   async (_, { dispatch }) => {
-    localStorage.removeItem("token");
+    await logoutUser();
 
     dispatch(
       modalSlice.actions.setModal({
@@ -152,7 +150,6 @@ export const logOut = createAsyncThunk(
         status: "info",
       })
     );
-
     return null;
   }
 );
@@ -197,8 +194,9 @@ export const authSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(signUp.fulfilled, (state) => {
+      .addCase(signUp.fulfilled, (state, action) => {
         state.isLoading = false;
+        state.user = action.payload;
       })
       .addCase(signUp.rejected, (state, action) => {
         state.isLoading = false;

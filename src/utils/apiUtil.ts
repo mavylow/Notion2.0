@@ -1,17 +1,32 @@
+import { IDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
+import { ParamValue } from "next/dist/server/request/params";
+import { StorageUtil } from "./storageUtil";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+export const getApiUrl = (): string => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+};
+
+export const API_URL = getApiUrl();
 
 export async function fetchRESTData(
   api: string,
   method: apiMethod,
   body?: string
 ) {
-  const token = localStorage.getItem("token");
+  const apiPath = api.startsWith("/") ? api : `/${api}`;
+  const fullUrl = `${getApiUrl()}${apiPath}`;
+
+  const token = StorageUtil.get("token");
 
   const config: AxiosRequestConfig = {
     method: method.toLowerCase(),
-    url: api,
+    url: fullUrl,
     headers: {
       "Content-Type": "application/json;charset=utf-8",
     },
@@ -28,6 +43,12 @@ export async function fetchRESTData(
   try {
     const response = await axios(config);
 
+    if (method === "DELETE") {
+      if (response.status === 204 || response.status === 200) {
+        return { success: true };
+      }
+    }
+
     if (response.status === 204) {
       return null;
     }
@@ -35,6 +56,9 @@ export async function fetchRESTData(
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (method === "DELETE" && error.response?.status === 404) {
+        return { success: true, alreadyDeleted: true };
+      }
       throw new Error(error.response?.data?.message || "Data fetching error");
     }
     throw error;
@@ -43,7 +67,7 @@ export async function fetchRESTData(
 
 export async function fetchGraphQLData(body?: string) {
   try {
-    const token = localStorage.getItem("token");
+    const token = StorageUtil.get("token");
 
     const response = await fetch("/api/graphql", {
       method: "POST",
@@ -67,28 +91,8 @@ export async function fetchGraphQLData(body?: string) {
 }
 
 export const loadPosts = async () => {
-  const query = `
-    query allPosts {
-      allPosts {
-        id, 
-        authorId, 
-        title, 
-        content, 
-        image, 
-        creationDate,
-        likedByUsers {
-          id,
-          email
-        }
-      }
-    }
-  `;
-  try {
-    const { data } = await axios.post("/api/graphql", { query });
-    return data.data.allPosts;
-  } catch (e) {
-    console.error(e);
-  }
+  const posts = await fetchRESTData(`/api/posts`, "GET");
+  return posts.data;
 };
 
 export const addPostsAxios = async (newPost: string) => {
@@ -96,51 +100,42 @@ export const addPostsAxios = async (newPost: string) => {
 };
 
 export const loadUser = async (userId: number) => {
-  const user = await fetchRESTData(`api/users/${userId}`, "GET");
-  return user;
+  const user = await fetchRESTData(`/api/profile/${userId}`, "GET");
+  return user.data;
 };
 
 export const loginUser = async (loginForm: string) => {
   const user = await fetchRESTData("/api/login", "POST", loginForm);
-  return user;
+  return user.data;
+};
+
+export const logoutUser = async () => {
+  await fetchRESTData("/api/logout", "GET");
+};
+
+export const loadLikes = async (id: number) => {
+  const likes = await fetchRESTData(`/api/posts/${id}/likes`, "GET");
+  return likes.data;
 };
 
 export const restoreUser = async () => {
-  const query = `
-    query me {
-      me {
-        id,
-        username,
-        email,
-        firstName,
-        profileImage,
-        description,
-        secondName
-      }
-    }
-  `;
-  const operationName = "me";
-  const body = {
-    query,
-    operationName,
-  };
-  const data = await fetchGraphQLData(JSON.stringify(body));
-  return data.data[operationName];
+  const user = await fetchRESTData("/api/me", "GET");
+  return user.data;
 };
 
 export const signUpUser = async (singUpForm: string) => {
   const user = await fetchRESTData("/api/signup", "POST", singUpForm);
-  return user;
+  return user.data;
 };
 
 export const updateUserAxios = async (updatedUser: string) => {
   const user = await fetchRESTData("/api/profile", "PUT", updatedUser);
-  return user;
+  return user.data;
 };
 
 export const loadPostComments = async (postId: number) => {
   const comments = await fetchRESTData(`/api/posts/${postId}/comments`, "GET");
-  return comments;
+  return comments.data;
 };
 
 export const deleteComment = async (commentId: number) => {
@@ -148,91 +143,81 @@ export const deleteComment = async (commentId: number) => {
 };
 
 export const addComment = async (commentData: string) => {
-  await fetchRESTData("api/comments", "POST", commentData);
+  await fetchRESTData("/api/comments", "POST", commentData);
 };
 
 export const likePost = async (postId: number) => {
-  const token = localStorage.getItem("token");
-
-  const query = `
-   mutation likePost($postId: Int!) {
-    likePost(postId: $postId) {
-      id
-      likedByUsers {
-        id
-      }
-    }
-   }
-  `;
-
-  try {
-    const response = await axios.post(
-      "/api/graphql",
-      {
-        query,
-        variables: { postId },
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      }
-    );
-
-    return response.data;
-  } catch (error) {
-    console.error("Error liking post:", error);
-    throw error;
-  }
+  await fetchRESTData("/api/like", "POST", JSON.stringify({ postId }));
 };
 
 export const dislikePost = async (postId: number) => {
-  await fetchRESTData("api/dislike", "POST", JSON.stringify({ postId }));
+  await fetchRESTData("/api/dislike", "POST", JSON.stringify({ postId }));
 };
 
 export const getSuggested = async () => {
   const suggested = await fetchRESTData("/api/getSuggested", "GET");
-  return suggested;
+  return suggested.data;
 };
 
 export const getGroups = async () => {
   const groups = await fetchRESTData("/api/groups", "GET");
-  return groups;
+  return groups.data;
 };
 
 export const getStatisticLikes = async () => {
-  const query = `
-    query meLikes {
-      meLikes {
-        id,
-        creationDate
-      }
-    }
-  `;
-  const token = localStorage.getItem("token");
-
-  try {
-    const { data } = await axios.post(
-      `/api/graphql`,
-      { query },
-      { headers: { Authorization: token ? `Bearer ${token}` : "" } }
-    );
-    return data.data.meLikes;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.message || "Data fetching error");
-    }
-    throw error;
-  }
+  const likes = await fetchRESTData(`/api/me/likes`, "GET");
+  return likes.data;
 };
 
 export const getStatisticPosts = async () => {
   const posts = await fetchRESTData(`/api/me/posts`, "GET");
-  return posts;
+  return posts.data;
 };
 
 export const getStatisticComments = async () => {
-  const comments = fetchRESTData(`/api/me/comments`, "GET");
-  return comments;
+  const comments = await fetchRESTData(`/api/me/comments`, "GET");
+  return comments.data;
+};
+
+export const getNote = async (id: number | string) => {
+  const note = await fetchRESTData(`/api/note/${id}`, "GET");
+  return note.data;
+};
+
+export const deleteNote = async (id: number) => {
+  await fetchRESTData(`/api/note/${id}`, "DELETE");
+  return id;
+};
+
+export const getDesks = async () => {
+  const desks = await fetchRESTData(`/api/desks`, "GET");
+  return desks.data;
+};
+export const createDesk = async (newDesk: IDesk) => {
+  const desk = await fetchRESTData(
+    `/api/desks`,
+    "POST",
+    JSON.stringify(newDesk)
+  );
+  return desk;
+};
+
+export const deleteDeskById = async (id: number) => {
+  await fetchRESTData(`/api/desks`, "DELETE", JSON.stringify(id));
+};
+
+export const getAllNotes = async (id: ParamValue) => {
+  const res = await fetch(`/api/all_notes/${id}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+
+  const result = await res.json();
+  return result.data;
 };

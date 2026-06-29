@@ -4,7 +4,7 @@ function Footer() {
   return (
     <footer>
       <p>
-        © <time dateTime="2026">2026</time> sidekick
+        © <time dateTime="2026">2026</time> mavylow
       </p>
     </footer>
   );

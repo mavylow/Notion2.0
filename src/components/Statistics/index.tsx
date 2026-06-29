@@ -84,6 +84,7 @@ function Statistics() {
     if (!comments) {
       return [];
     }
+
     return calculateFullStats(comments);
   }, [comments]);
 

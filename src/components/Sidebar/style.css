@@ -1,9 +1,9 @@
-aside .frame {
+.main-aside .frame {
   padding: 24px;
   margin-bottom: 12px;
 }
 
-aside {
+.main-aside {
   position: sticky;
   top: 88px;
   height: calc(100vh - 88px);
@@ -11,18 +11,18 @@ aside {
   font-size: 16px;
 }
 
-aside section {
+.main-aside section {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-aside h3 {
+.main-aside h3 {
   font-size: 16px;
 }
 
 @media (max-width: 1450px), (max-height: 910px) {
-  aside {
+  .main-aside {
     display: none;
   }
 }

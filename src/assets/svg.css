@@ -13,7 +13,10 @@
   fill: var(--svg-color);
 }
 
-.svg-comment path {
+.svg-comment path,
+.svg-zoom-in path,
+.svg-zoom-out path,
+.svg-maximize path {
   stroke: var(--svg-color);
 }
 
@@ -21,7 +24,18 @@
   fill: var(--svg-color);
   stroke: none;
 }
-.svg-heart-disliked path {
+.svg-heart-disliked path,
+.svg-add path,
+.svg-arrow-left path {
   fill: none;
   stroke: var(--svg-color);
+}
+
+.svg-icon {
+  height: 12px;
+  width: 12px;
+}
+
+.svg-logo {
+  height: clamp(20px, 5vw, 50px);
 }

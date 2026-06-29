@@ -1,6 +1,7 @@
 "use client";
 
 import type { TProfilePages } from "@/interfaces";
+import { StorageUtil } from "@/utils/storageUtil";
 import { createContext } from "react";
 import { create } from "zustand";
 
@@ -10,9 +11,9 @@ interface IProfilePageContext {
 }
 
 export const useProfilePage = create<IProfilePageContext>((set) => ({
-  profilePage: (localStorage.getItem("profile") as TProfilePages) || "info",
+  profilePage: "info",
   changePage: (page: TProfilePages) => {
-    localStorage.setItem("profile", page);
+    StorageUtil.set("profile", page);
     set({ profilePage: page });
   },
 }));

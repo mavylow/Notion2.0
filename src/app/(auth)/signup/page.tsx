@@ -52,7 +52,7 @@ function SignUp() {
 
   const [isPasswordOpen, setIsPasswordOpen] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  const isAuth = useSelector<RootState>((state) => state.auth.isAuth);
+  const user = useSelector<RootState>((state) => state.auth.user);
   const showEmailValidation = touchedFields.email || submitCount > 0;
 
   const showPasswordValidation = touchedFields.password || submitCount > 0;
@@ -62,10 +62,17 @@ function SignUp() {
   });
 
   useEffect(() => {
-    if (isAuth) {
+    if (!user) return;
+
+    const desk = sessionStorage.getItem("redirectAfterAuth");
+
+    if (desk) {
+      sessionStorage.removeItem("redirectAfterAuth");
+      redirect(desk);
+    } else {
       redirect("/");
     }
-  }, [isAuth]);
+  }, [user]);
 
   return (
     <main>

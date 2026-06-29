@@ -1,0 +1,144 @@
+.create-post {
+  width: 100%;
+  height: clamp(60px, 10vw, 88px);
+  padding: 12px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.create-post div {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.home > .frame {
+  padding: 0;
+  margin-bottom: 26px;
+}
+
+.create-post img {
+  width: clamp(32px, 5vw, 64px);
+  height: clamp(32px, 5vw, 64px);
+  object-fit: cover;
+  border-radius: 50%;
+  margin-right: 12px;
+}
+
+.create-post button {
+  width: clamp(140px, 15vw, 188px);
+  height: clamp(36px, 5vw, 44px);
+}
+
+.add-post {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--background-main);
+  width: min(800px, 95vw);
+  max-height: 90vh;
+  height: auto;
+  gap: clamp(12px, 2vw, 24px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(12px, 2vw, 24px);
+  border: 1px solid var(--border-color);
+  z-index: 1001;
+}
+
+.add-post button {
+  align-self: flex-end;
+  width: clamp(96px, 10vw, 144px);
+}
+
+.add-post #post-title {
+  width: min(327px, 100%);
+}
+
+.add-post #post-description {
+  width: 100%;
+  min-height: 58px;
+  resize: none;
+}
+
+.add-post svg {
+  height: clamp(16px, 2vw, 20px);
+  width: clamp(16px, 2vw, 20px);
+}
+
+.add-post h2 {
+  font-size: clamp(16px, 3vw, 32px);
+  font-weight: 400;
+}
+
+.postImg-label {
+  border: 1px dashed var(--border-color);
+  padding: clamp(8px, 1vw, 16px) clamp(12px, 1.2vw, 24px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 24px;
+  height: clamp(68px, 5vw, 84px);
+}
+
+.postImg-label div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(8px, 1vw, 12px);
+  font-size: 12px;
+}
+
+.postImg-label span {
+  color: var(--light-text-color);
+}
+
+.postImg-label svg {
+  height: 36px;
+  width: 36px;
+}
+
+.post-form-header {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  height: clamp(24px, 4vw, 52px);
+}
+
+#postImg {
+  display: none;
+}
+
+.post-form-header button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: clamp(24px, 3vw, 52px);
+}
+
+@media (max-width: 700px) {
+  .home > .frame {
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-post {
+    max-height: 100vh;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  .add-post {
+    width: 100vw;
+  }
+}

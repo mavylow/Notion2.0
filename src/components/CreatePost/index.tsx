@@ -206,7 +206,7 @@ function CreatePost({ onAdd }: ICreatePostProps) {
         <div className="create-post">
           <div>
             <Image
-              src={user?.profileImage}
+              src={user?.profileImage || "/assets/default.png"}
               alt="profile-image"
               width={64}
               height={64}

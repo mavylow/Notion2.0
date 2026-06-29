@@ -6,6 +6,8 @@ import ClientsInit from "@components/ClientsInit";
 import ContextProvider from "@providers/ContextProvider";
 import { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
+
 const Global = createGlobalStyle`
 * {
   box-sizing: border-box;
@@ -19,8 +21,8 @@ interface RootLayoutProps {
 }
 
 export const metadata: Metadata = {
-  title: "Sidekick media",
-  description: "Social network from Sidekick",
+  title: "Mavylow media",
+  description: "Social network from Mavylow",
   keywords: ["social", "network", "posts", "community"],
 };
 
@@ -28,7 +30,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" data-theme="dark">
       <head>
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
         <meta name="author" content="Sidekick" />
         <title>social_media</title>
       </head>

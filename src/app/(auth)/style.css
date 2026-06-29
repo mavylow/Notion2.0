@@ -67,10 +67,10 @@
 }
 .password-icon {
   position: absolute;
-  top: 0;
-  left: 0;
+  top: -1px;
+  left: 0px;
   width: 16px;
-  height: 21px;
+  height: 22px;
   display: flex;
   align-items: center;
 }
@@ -79,4 +79,10 @@
   .sing-up button {
     margin-top: 8px;
   }
+}
+
+.sing-up input,
+.sing-up textarea,
+.sing-up select {
+  font-size: 16px;
 }

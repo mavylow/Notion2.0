@@ -18,6 +18,7 @@ import {
   likePost,
   loadPostComments,
   loadUser,
+  loadLikes,
 } from "@/utils/apiUtil";
 import ChevronIconExpanded from "@/assets/ChevronIconExpanded";
 import HeartLikeIcon from "@/assets/HeartLikeIcon";
@@ -33,7 +34,6 @@ import {
 import { Box, Skeleton } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
-import FrameWrapper from "@components/FrameWrapper";
 import {
   AddComment,
   Comments,
@@ -56,8 +56,7 @@ interface PostProps {
 function Post({ post, onLike }: PostProps) {
   const { t } = useTranslation();
 
-  const { id, authorId, title, content, image, likedByUsers, creationDate } =
-    post;
+  const { id, authorId, title, content, image, creationDate } = post;
   const date = formattedDate(creationDate);
   const user = useSelector((state: RootState) => state.auth.user);
   const queryClient = useQueryClient();
@@ -68,6 +67,11 @@ function Post({ post, onLike }: PostProps) {
   const { data: author } = useSuspenseQuery<IUser>({
     queryKey: ["users", authorId],
     queryFn: () => loadUser(authorId),
+  });
+
+  const { data: likedByUsers, refetch: refetchLikes } = useQuery({
+    queryKey: ["users", id, "likes"],
+    queryFn: () => loadLikes(id),
   });
 
   const { data: comments, refetch: refetchComments } = useQuery<IComment[]>({
@@ -89,6 +93,7 @@ function Post({ post, onLike }: PostProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["post"] });
       onLike();
+      refetchLikes();
     },
   });
 
@@ -143,7 +148,7 @@ function Post({ post, onLike }: PostProps) {
         <WithoutComment>
           <PostHeader>
             <PostAvatar
-              src={author?.profileImage}
+              src={author.profileImage || "/assets/default.png"}
               alt={`Profile picture of ${author?.username}`}
               className="post-avatar"
               loading="lazy"
@@ -178,7 +183,7 @@ function Post({ post, onLike }: PostProps) {
           </div>
           <PostInfo>
             <Likes>
-              {user && likedByUsers?.some((u) => u.email === user.email) ? (
+              {user && likedByUsers?.some((u) => u.userId === user.id) ? (
                 <Button
                   type="button"
                   Icon={HeartLikeIcon}
@@ -192,7 +197,7 @@ function Post({ post, onLike }: PostProps) {
                 />
               )}
 
-              <span>{t("like", { count: likedByUsers.length })}</span>
+              <span>{t("like", { count: likedByUsers?.length })}</span>
             </Likes>
             <Comments>
               <CommentIcon />

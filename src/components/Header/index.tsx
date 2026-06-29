@@ -11,8 +11,10 @@ import { type RootState } from "@/store";
 import { useProfilePage } from "@store/profileStore";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 function Header() {
+  const { t } = useTranslation();
   const [isMobile, setIsMobile] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isPageAuth, setIsPageAuth] = useState(true);
@@ -35,7 +37,11 @@ function Header() {
     if (
       location === "/signin" ||
       location === "/signup" ||
-      !(location === "/" || location === "/profile")
+      !(
+        location === "/" ||
+        location === "/profile" ||
+        location.includes("desk")
+      )
     ) {
       setIsPageAuth(true);
     } else {
@@ -85,7 +91,6 @@ function Header() {
         data-testid="header"
       >
         <div className="logo" onClick={() => handleNavigate("/")}>
-          <SidekickLogo />
           <SidekickLogoText />
         </div>
         {!isPageAuth && (
@@ -118,12 +123,15 @@ function Header() {
                     >
                       Statistics
                     </Link>
+                    <Link data-testid="statistics" href={"/desk"}>
+                      Desks
+                    </Link>
                   </>
                 ) : (
                   <>
                     <Link href={"/profile"}>
                       <Image
-                        src={user.profileImage}
+                        src={user?.profileImage || "/assets/default.png"}
                         alt="profile-image"
                         height={24}
                         width={24}
@@ -134,8 +142,9 @@ function Header() {
                         priority={true}
                       />
                     </Link>
-                    <Link href={"/profile"}>
-                      {user.firstName} {user.secondName}
+                    <Link href={"/profile"}>{user.username}</Link>
+                    <Link data-testid="statistics" href={"/desk"}>
+                      {t("desks")}
                     </Link>
                   </>
                 )}
@@ -160,7 +169,7 @@ function Header() {
           >
             {user && isExpanded ? (
               <Image
-                src={user?.profileImage || "/image/default-avatar.webp"}
+                src={user?.profileImage || "/assets/default.png"}
                 alt="Hide menu profile image"
                 height={24}
                 width={24}

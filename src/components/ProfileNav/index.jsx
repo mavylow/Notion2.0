@@ -1,11 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useProfilePage } from "@/store/profileStore";
+import { useEffect } from "react";
+import { StorageUtil } from "@/utils/storageUtil";
 
 function ProfileNav() {
   const { t } = useTranslation();
   const { profilePage, changePage } = useProfilePage((state) => state);
+
   return (
     <nav>
       <a

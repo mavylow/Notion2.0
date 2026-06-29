@@ -38,6 +38,7 @@ export default function Input(props: InputProps | FormInputProps) {
     return (
       <div className="input-wrapper">
         <label
+          id={id}
           htmlFor={postId ? "input" + id + postId : "input" + id}
           className="default-label"
         >

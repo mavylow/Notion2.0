@@ -12,7 +12,6 @@ export interface IPost {
   likedByUsers: IUser[];
 }
 
-
 export interface IUser {
   id: number;
   username: string;
@@ -28,6 +27,17 @@ export interface IUser {
   modifiedDate?: string;
 }
 
+export interface Note {
+  id: number;
+  userId: string;
+  title: string;
+  body: string;
+  desk: boolean;
+  x: number;
+  y: number;
+  creationDate?: string;
+  modifiedDate?: string;
+}
 
 export interface IComment {
   id: number;
@@ -38,14 +48,12 @@ export interface IComment {
   modifiedDate: string;
 }
 
-
 export interface ILike {
   id: number;
   postId: number;
   userId: number;
   creationDate: string;
 }
-
 
 export interface IGroup {
   id: number;
@@ -60,13 +68,13 @@ export interface ISidebarUser {
   firstName: string;
   secondName: string;
   description: string;
-  photo: string;
+  profileImage: string;
 }
 
 export interface IForm {
   email: string;
   password: string;
-};
+}
 
 export interface IProfileForm {
   image?: string;
@@ -78,7 +86,7 @@ export interface ILike {
   id: number;
   postId: number;
   userId: number;
-  creationDate: string
+  creationDate: string;
 }
 
 export interface YearStats {
@@ -94,10 +102,31 @@ export interface MonthStat {
 export type TProfilePages = "info" | "statistics";
 
 export type IModal = {
-  id: number
-  isOpen: boolean
+  id: number;
+  isOpen: boolean;
   message: string;
   status: modalStatus;
 };
 
 export type modalStatus = "success" | "error" | "warning" | null;
+
+export interface INote {
+  userId: number;
+  id: number;
+  title: string;
+  body: string;
+  desk: boolean;
+  x: number;
+  height?: number;
+  width?: number;
+  y: number;
+  deskId: number;
+  createdAt: string;
+}
+
+export type ITag = INote & { isActive: boolean };
+
+export interface IDesk {
+  name: string;
+  public: boolean;
+}

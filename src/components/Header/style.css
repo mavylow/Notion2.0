@@ -1,3 +1,7 @@
+:root {
+  --header-height: 68px;
+}
+
 .nav-expanded,
 .nav-expanded main {
   position: fixed;
@@ -23,7 +27,7 @@
   z-index: 1001;
 }
 .desktop {
-  height: 68px;
+  height: var(--header-height);
 }
 
 .mobile {
@@ -215,6 +219,9 @@ header a {
 }
 
 @media (max-width: 768px) {
+  :root {
+    --header-height: 24px;
+  }
   .mobile.expanded {
     height: 40px;
   }

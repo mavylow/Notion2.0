@@ -45,7 +45,6 @@ function AuthProvider({ children }: AuthProviderProps) {
   }, [user, location, loading]);
 
   const updateUser = async (updatedUser: IProfileForm) => {
-    console.log(updatedUser);
     const newUser = await updateUserAxios(JSON.stringify(updatedUser));
     if (newUser) {
       dispatch(setUser(newUser));
@@ -58,9 +57,6 @@ function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  if (loading) {
-    return <CircularProgress sx={{ color: "var(--primary-orange)" }} />;
-  }
   return (
     <AuthContext.Provider value={{ user, updateUser }}>
       {children}
