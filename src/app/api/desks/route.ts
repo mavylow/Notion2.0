@@ -1,6 +1,6 @@
 import pool from "@/db/db";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import z, { ZodError } from "zod";
 import { v4 as uuidv4 } from "uuid";
@@ -10,20 +10,9 @@ const DeskSchema = z.object({
   link: z.string().optional(),
 });
 
-const SECRET_KEY = process.env.SECRET_KEY;
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
+    const authorId = request.headers.get("user-id");
 
     const queryOwnDesk = `
           SELECT * 
@@ -34,10 +23,10 @@ export async function GET() {
     const resultOwnDesks = await pool.query(queryOwnDesk, [authorId]);
 
     const queryOtherDesks = `
-    SELECT desks.id, link, "authorId", name, "creationDate" 
-FROM permissions
-LEFT JOIN desks on desks."id" = permissions."deskId"
-WHERE "userId" = $1
+          SELECT desks.id, link, "authorId", name, "creationDate" 
+          FROM permissions
+          LEFT JOIN desks on desks."id" = permissions."deskId"
+          WHERE "userId" = $1
     `;
 
     const resultOtherDesks = await pool.query(queryOtherDesks, [authorId]);
@@ -69,21 +58,12 @@ WHERE "userId" = $1
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const desk = await request.json();
   const { name, public: isPublic } = desk;
 
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
+    const authorId = request.headers.get("user-id");
 
     DeskSchema.parse(desk);
 
@@ -137,17 +117,7 @@ export async function DELETE(request) {
       );
     }
 
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const decoded = jwt.decode(token, SECRET_KEY);
-    const authorId = decoded?.data || decoded?.id;
+    const authorId = request.headers.get("user-id");
 
     if (!authorId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db.js";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
 
-const SECRET_KEY = process.env.SECRET_KEY;
+import { cookies } from "next/headers";
 
 export async function GET(
   request: NextRequest,
@@ -11,22 +9,7 @@ export async function GET(
 ) {
   const { id } = await context.params;
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    let userId: number;
-    try {
-      const decoded = jwt.verify(token, SECRET_KEY) as { data: number };
-      userId = decoded.data;
-    } catch (jwtError) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
+    const userId = request.headers.get("user-id");
 
     const deskQuery = `SELECT * FROM desks WHERE link = $1`;
     const deskResult = await pool.query(deskQuery, [id]);

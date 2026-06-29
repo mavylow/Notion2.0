@@ -1,10 +1,6 @@
 import pool from "@/db/db";
 import { NextRequest, NextResponse } from "next/server";
 import z, { ZodError } from "zod";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
-
-const SECRET_KEY = process.env.SECRET_KEY;
 
 export async function GET() {
   try {
@@ -50,14 +46,7 @@ export async function POST(request: NextRequest) {
 
     `;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userId } = await jwt.decode(token, SECRET_KEY);
+    const userId = request.headers.get("user-id");
 
     const result = await pool.query(query, [
       userId,
@@ -78,7 +67,7 @@ export async function POST(request: NextRequest) {
         { status: 412 }
       );
     }
-
+    console.log(e);
     return NextResponse.json(
       { error: "Failed to create post" },
       { status: 500 }
