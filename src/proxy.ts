@@ -86,9 +86,14 @@ function checkAuth(request: NextRequest): NextResponse {
       );
     }
 
-    const response = NextResponse.next();
-    response.headers.set("user-id", String(userId));
-    return response;
+    const newHeaders = new Headers(request.headers);
+    newHeaders.set("user-id", String(userId));
+
+    return NextResponse.next({
+      request: {
+        headers: newHeaders,
+      },
+    });
   } catch {
     return NextResponse.json(
       { error: "Authentication failed" },
