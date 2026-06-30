@@ -124,6 +124,20 @@ export interface INote {
   createdAt: string;
 }
 
+export type HttpMethod =
+  | "GET"
+  | "HEAD"
+  | "OPTIONS"
+  | "POST"
+  | "PUT"
+  | "DELETE"
+  | "PATCH";
+
+export type RouteMatch = {
+  route: RegExp;
+  method: HttpMethod;
+};
+
 export type ITag = INote & { isActive: boolean };
 
 export interface IDesk {

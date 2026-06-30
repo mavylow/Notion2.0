@@ -22,8 +22,6 @@ export async function fetchRESTData(
   const apiPath = api.startsWith("/") ? api : `/${api}`;
   const fullUrl = `${getApiUrl()}${apiPath}`;
 
-  const token = StorageUtil.get("token");
-
   const config: AxiosRequestConfig = {
     method: method.toLowerCase(),
     url: fullUrl,
@@ -31,10 +29,6 @@ export async function fetchRESTData(
       "Content-Type": "application/json;charset=utf-8",
     },
   };
-
-  if (token) {
-    config.headers!.Authorization = `Bearer ${token}`;
-  }
 
   if (body && method !== "GET") {
     config.data = body;
@@ -65,31 +59,6 @@ export async function fetchRESTData(
   }
 }
 
-export async function fetchGraphQLData(body?: string) {
-  try {
-    const token = StorageUtil.get("token");
-
-    const response = await fetch("/api/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: body,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    if (response.status === 204) {
-      return null;
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error(error);
-  }
-}
-
 export const loadPosts = async () => {
   const posts = await fetchRESTData(`/api/posts`, "GET");
   return posts.data;
@@ -105,12 +74,12 @@ export const loadUser = async (userId: number) => {
 };
 
 export const loginUser = async (loginForm: string) => {
-  const user = await fetchRESTData("/api/login", "POST", loginForm);
+  const user = await fetchRESTData("/api/signin", "POST", loginForm);
   return user.data;
 };
 
 export const logoutUser = async () => {
-  await fetchRESTData("/api/logout", "GET");
+  await fetchRESTData("/api/signout", "GET");
 };
 
 export const loadLikes = async (id: number) => {
