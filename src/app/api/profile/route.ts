@@ -1,10 +1,5 @@
-// app/api/profile/route.ts
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db";
-
-const SECRET_KEY = process.env.SECRET_KEY;
 
 interface IProfileUpdateData {
   username?: string;
@@ -13,22 +8,9 @@ interface IProfileUpdateData {
   image?: string;
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: userId } = await jwt.decode(token, SECRET_KEY);
-
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
+    const userId = request.headers.get("user-id");
 
     const body = await request.json();
     const { username, email, description, image }: IProfileUpdateData = body;

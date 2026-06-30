@@ -1,26 +1,11 @@
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
+
 import pool from "@/db/db";
 
-const SECRET_KEY = process.env.SECRET_KEY;
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
-
-    if (!authorId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
+    const authorId = request.headers.get("user-id");
 
     const query = `
     SELECT * 

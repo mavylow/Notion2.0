@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import pool from "@/db/db";
 
 export async function GET(_, context: { params: Promise<{ id: string }> }) {

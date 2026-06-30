@@ -21,17 +21,6 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const cookiesStore = await cookies();
-
-    const token = cookiesStore.get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
     if (!result.rows) {
       return NextResponse.json(
         { error: "No comments provided" },

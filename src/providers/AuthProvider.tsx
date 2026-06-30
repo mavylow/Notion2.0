@@ -38,7 +38,7 @@ function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   useEffect(() => {
-    const protectedRoutes = ["/profile"];
+    const protectedRoutes = ["/profile", "/desk"];
     if (!loading && !user && protectedRoutes.includes(location)) {
       redirect("/");
     }
