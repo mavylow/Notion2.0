@@ -15,21 +15,7 @@ interface IProfileUpdateData {
 
 export async function PUT(request: Request) {
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: userId } = await jwt.decode(token, SECRET_KEY);
-
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
+    const userId = request.headers.get("user-id");
     const body = await request.json();
     const { username, email, description, image }: IProfileUpdateData = body;
 
@@ -133,13 +119,7 @@ export async function PUT(request: Request) {
 
     const updatedUser = updateResult.rows[0];
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: updatedUser,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ data: updatedUser }, { status: 200 });
   } catch (error: any) {
     console.error("Error in profile update:", error);
 

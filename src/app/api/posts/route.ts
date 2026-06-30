@@ -1,10 +1,6 @@
 import pool from "@/db/db";
 import { NextRequest, NextResponse } from "next/server";
 import z, { ZodError } from "zod";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
-
-const SECRET_KEY = process.env.SECRET_KEY;
 
 export async function GET() {
   try {
@@ -21,7 +17,7 @@ export async function GET() {
     }
     const posts = result.rows;
 
-    return NextResponse.json({ success: true, data: posts }, { status: 200 });
+    return NextResponse.json({ data: posts }, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { error: "Error with the server" },
@@ -40,6 +36,7 @@ export async function POST(request: NextRequest) {
   });
 
   try {
+    const userId = request.headers.get("user-id");
     const validatedPost = PostSchema.parse(post);
     const { title, content, image } = validatedPost;
 
@@ -50,15 +47,6 @@ export async function POST(request: NextRequest) {
 
     `;
 
-    const cookieStore = await cookies();
-    const token = cookieStore.get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { data: userId } = await jwt.decode(token, SECRET_KEY);
-
     const result = await pool.query(query, [
       userId,
       title,
@@ -67,10 +55,7 @@ export async function POST(request: NextRequest) {
       new Date(),
     ]);
 
-    return NextResponse.json(
-      { success: true, data: result.rows[0] },
-      { status: 201 }
-    );
+    return NextResponse.json({ data: result.rows[0] }, { status: 201 });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json(

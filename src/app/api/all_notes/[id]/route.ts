@@ -10,24 +10,8 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  const userId = request.headers.get("user-id");
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    let userId: number;
-    try {
-      const decoded = jwt.verify(token, SECRET_KEY) as { data: number };
-      userId = decoded.data;
-    } catch (jwtError) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
     const deskQuery = `SELECT * FROM desks WHERE link = $1`;
     const deskResult = await pool.query(deskQuery, [id]);
 
@@ -61,7 +45,6 @@ export async function GET(
       const result = await pool.query(notesQuery, [activeDesk.id]);
 
       return NextResponse.json({
-        success: true,
         data: { notes: result.rows, deskId: activeDesk.id },
         count: result.rows.length,
       });
@@ -113,7 +96,6 @@ export async function GET(
       const result = await pool.query(notesQuery, [activeDesk.id]);
 
       return NextResponse.json({
-        success: true,
         data: { notes: result.rows, deskId: activeDesk.id },
         count: result.rows.length,
       });
@@ -125,7 +107,6 @@ export async function GET(
 
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   } catch (err: any) {
-    console.error("Error fetching notes:", err);
     return NextResponse.json(
       {
         error: "Failed to fetch notes",

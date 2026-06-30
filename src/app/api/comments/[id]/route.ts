@@ -1,20 +1,10 @@
 import pool from "@/db/db";
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function DELETE(_, { params }) {
   const { id } = await params;
 
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
     const query = `
           SELECT 
           FROM comments

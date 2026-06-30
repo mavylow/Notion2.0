@@ -1,10 +1,7 @@
 import pool from "@/db/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> }
-) {
+export async function GET(_, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
 
   try {
@@ -14,12 +11,11 @@ export async function GET(
      WHERE id=$1
       `;
     const result = await pool.query(query, [id]);
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({ data: result.rows[0] });
   } catch (err) {
     console.error("DB Connection Error:", err);
     return NextResponse.json(
       {
-        success: false,
         error: err.message,
         code: err.code,
       },
@@ -40,15 +36,10 @@ export async function PATCH(
 
     if (note.rows.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Note with this id doesn't exist",
-        },
+        { error: "Note with this id doesn't exist" },
         { status: 404 }
       );
     }
-
-    console.log(reqBody);
 
     const updates: string[] = [];
     const values: any[] = [];
@@ -57,7 +48,7 @@ export async function PATCH(
     if (reqBody.title !== undefined) {
       if (!reqBody.title || reqBody.title.trim() === "") {
         return NextResponse.json(
-          { success: false, error: "Title cannot be empty" },
+          { error: "Title cannot be empty" },
           { status: 400 }
         );
       }
@@ -97,7 +88,7 @@ export async function PATCH(
 
     if (updates.length === 0) {
       return NextResponse.json(
-        { success: false, error: "No fields to update" },
+        { error: "No fields to update" },
         { status: 400 }
       );
     }
@@ -113,12 +104,11 @@ export async function PATCH(
 
     const result = await pool.query(query, values);
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({ data: result.rows[0] });
   } catch (err) {
     console.error("DB Connection Error:", err);
     return NextResponse.json(
       {
-        success: false,
         error: err.message,
         code: err.code,
       },
@@ -137,13 +127,7 @@ export async function PUT(
     const { id } = await params;
 
     if (!title || title.trim() === "") {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Title is required",
-        },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
 
     const noteQuery = `SELECT * FROM notes WHERE id = $1`;
@@ -151,10 +135,7 @@ export async function PUT(
 
     if (note.rows.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Note with this id doesn't exist",
-        },
+        { error: "Note with this id doesn't exist" },
         { status: 404 }
       );
     }
@@ -180,22 +161,15 @@ export async function PUT(
       id,
     ]);
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({ data: result.rows[0] });
   } catch (err) {
     console.error("DB Connection Error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: err.message,
-        code: err.code,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
@@ -206,24 +180,14 @@ export async function DELETE(
 
     if (note.rows.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Note with this id doesn't exist",
-        },
+        { error: "Note with this id doesn't exist" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ status: 204 });
   } catch (err) {
     console.error("DB Connection Error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: err.message,
-        code: err.code,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

@@ -1,12 +1,8 @@
 import pool from "@/db/db";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import z, { success, ZodError } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+import z, { ZodError } from "zod";
 
-const SECRET_KEY = process.env.SECRET_KEY;
-
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const comment = await request.json();
 
   const CommentsSchema = z.object({
@@ -33,16 +29,7 @@ export async function POST(request) {
       );
     }
 
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
+    const userId = request.headers.get("user-id");
 
     const queryComment = `
         INSERT INTO comments ("postId", "authorId", text, "creationDate")
@@ -52,7 +39,7 @@ export async function POST(request) {
 
     const commentsResult = await pool.query(queryComment, [
       postId,
-      authorId,
+      userId,
       text,
       new Date(),
     ]);
@@ -68,7 +55,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ success: true, data: commentsResult.rows[0] });
+    return NextResponse.json({ data: commentsResult.rows[0] });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json({ error: "Validation error" }, { status: 400 });

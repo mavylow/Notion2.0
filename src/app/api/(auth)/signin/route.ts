@@ -37,7 +37,6 @@ export async function POST(request: NextRequest) {
     const token = await startSession(responseUser.id);
 
     const res = NextResponse.json({
-      success: true,
       data: { token, user: responseUser },
     });
 
@@ -53,7 +52,6 @@ export async function POST(request: NextRequest) {
 
     return res;
   } catch (e) {
-    console.error("Login error:", e);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

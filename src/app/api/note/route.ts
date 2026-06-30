@@ -33,16 +33,9 @@ export async function POST(request: NextRequest) {
 
       new Date(),
     ]);
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({ data: result.rows[0] });
   } catch (err) {
     console.error("DB Connection Error:", err);
-    return NextResponse.json(
-      {
-        success: false,
-        error: err.message,
-        code: err.code,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

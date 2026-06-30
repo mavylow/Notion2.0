@@ -1,7 +1,5 @@
 import pool from "@/db/db";
-import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
+import { NextRequest, NextResponse } from "next/server";
 import z, { ZodError } from "zod";
 import { v4 as uuidv4 } from "uuid";
 
@@ -10,20 +8,9 @@ const DeskSchema = z.object({
   link: z.string().optional(),
 });
 
-const SECRET_KEY = process.env.SECRET_KEY;
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
+    const authorId = request.headers.get("user-id");
 
     const queryOwnDesk = `
           SELECT * 
@@ -34,11 +21,11 @@ export async function GET() {
     const resultOwnDesks = await pool.query(queryOwnDesk, [authorId]);
 
     const queryOtherDesks = `
-    SELECT desks.id, link, "authorId", name, "creationDate" 
-FROM permissions
-LEFT JOIN desks on desks."id" = permissions."deskId"
-WHERE "userId" = $1
-    `;
+          SELECT desks.id, link, "authorId", name, "creationDate" 
+          FROM permissions
+          LEFT JOIN desks on desks."id" = permissions."deskId"
+          WHERE "userId" = $1
+          `;
 
     const resultOtherDesks = await pool.query(queryOtherDesks, [authorId]);
 
@@ -54,7 +41,6 @@ WHERE "userId" = $1
     }
 
     return NextResponse.json({
-      success: true,
       data: resultOwnDesks.rows.concat(resultOtherDesks.rows),
     });
   } catch (e) {
@@ -69,21 +55,12 @@ WHERE "userId" = $1
   }
 }
 
-export async function POST(request) {
+export async function POST(request: NextRequest) {
   const desk = await request.json();
   const { name, public: isPublic } = desk;
 
   try {
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const { data: authorId } = await jwt.decode(token, SECRET_KEY);
+    const authorId = request.headers.get("user-id");
 
     DeskSchema.parse(desk);
 
@@ -114,7 +91,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
+    return NextResponse.json({ data: result.rows[0] });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json({ error: "Validation error" }, { status: 400 });
@@ -126,28 +103,11 @@ export async function POST(request) {
   }
 }
 
-export async function DELETE(request) {
+export async function DELETE(request: NextRequest) {
   try {
     const deskId = await request.json();
 
-    if (!deskId) {
-      return NextResponse.json(
-        { error: "Desk ID is required" },
-        { status: 400 }
-      );
-    }
-
-    const token = (await cookies()).get("session")?.value;
-
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
-    }
-
-    const decoded = jwt.decode(token, SECRET_KEY);
-    const authorId = decoded?.data || decoded?.id;
+    const authorId = request.headers.get("user-id");
 
     if (!authorId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
@@ -168,23 +128,23 @@ export async function DELETE(request) {
     }
 
     const deleteNotesQuery = `
-    DELETE FROM notes 
-    WHERE "deskId" = $1
-    RETURNING id, title
-  `;
+          DELETE FROM notes 
+          WHERE "deskId" = $1
+          RETURNING id, title
+        `;
     const deletedNotes = await pool.query(deleteNotesQuery, [deskId]);
 
     const deletePermissionsQuery = `
-      DELETE FROM permissions 
-      WHERE "deskId" = $1
-    `;
+          DELETE FROM permissions 
+          WHERE "deskId" = $1
+        `;
     await pool.query(deletePermissionsQuery, [deskId]);
 
     const deleteDeskQuery = `
-      DELETE FROM desks 
-      WHERE id = $1 AND "authorId" = $2
-      RETURNING id, name
-    `;
+          DELETE FROM desks 
+          WHERE id = $1 AND "authorId" = $2
+          RETURNING id, name
+        `;
 
     const result = await pool.query(deleteDeskQuery, [deskId, authorId]);
 
@@ -196,12 +156,7 @@ export async function DELETE(request) {
     }
 
     return NextResponse.json({
-      success: true,
-      message: "Desk deleted successfully",
-      data: {
-        id: result.rows[0].id,
-        name: result.rows[0].name,
-      },
+      status: 204,
     });
   } catch (e) {
     console.error("Delete desk error:", e);

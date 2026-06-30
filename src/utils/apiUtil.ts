@@ -116,11 +116,11 @@ export const addComment = async (commentData: string) => {
 };
 
 export const likePost = async (postId: number) => {
-  await fetchRESTData("/api/like", "POST", JSON.stringify({ postId }));
+  await fetchRESTData(`/api/posts/${postId}/likes`, "POST");
 };
 
 export const dislikePost = async (postId: number) => {
-  await fetchRESTData("/api/dislike", "POST", JSON.stringify({ postId }));
+  await fetchRESTData(`/api/posts/${postId}/likes`, "DELETE");
 };
 
 export const getSuggested = async () => {

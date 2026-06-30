@@ -2,7 +2,6 @@ import pool from "@/db/db";
 import { startSession } from "@/utils/session";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -53,10 +52,10 @@ export async function POST(request: NextRequest) {
       createdAt: newUser.creationDate,
     };
 
-    const res = NextResponse.json({
-      success: true,
-      data: { token, user: responseUser },
-    });
+    const res = NextResponse.json(
+      { data: { token, user: responseUser } },
+      { status: 200 }
+    );
 
     res.cookies.set({
       name: "session",

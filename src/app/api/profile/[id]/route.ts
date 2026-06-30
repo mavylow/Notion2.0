@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import pool from "@/db/db";
 
 export async function GET(_, context: { params: Promise<{ id: string }> }) {
@@ -23,13 +21,7 @@ export async function GET(_, context: { params: Promise<{ id: string }> }) {
     const responseUser = Object.assign({}, user);
     delete responseUser.password;
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: user,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({ data: user }, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching profile:", error);
     return NextResponse.json(
