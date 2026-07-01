@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const res = NextResponse.json(
       { data: { token, user: responseUser } },
-      { status: 200 }
+      { status: 201 }
     );
 
     res.cookies.set({

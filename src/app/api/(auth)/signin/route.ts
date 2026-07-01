@@ -1,14 +1,27 @@
 import pool from "@/db/db";
 import { startSession } from "@/utils/session";
+import { t } from "i18next";
 import { NextRequest, NextResponse } from "next/server";
+import z, { email, ZodError } from "zod";
 
 const bcrypt = require("bcrypt");
+
+const SingInSchema = z.object({
+  email: z.email("Write correct email"),
+  password: z
+    .string()
+    .min(8, t("shortPassword"))
+    .max(14, t("longPassword"))
+    .regex(/[0-9]/, t("passwordContainNumber")),
+});
 
 export async function POST(request: NextRequest) {
   const reqBody = await request.json();
   const { email, password } = reqBody;
 
   try {
+    SingInSchema.parse({ email, password });
+
     const query = `
     SELECT * 
     FROM users 
@@ -52,6 +65,9 @@ export async function POST(request: NextRequest) {
 
     return res;
   } catch (e) {
+    if (e instanceof ZodError) {
+      return NextResponse.json({ error: "Validation error" }, { status: 400 });
+    }
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

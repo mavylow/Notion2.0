@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ data: commentsResult.rows[0] });
+    return NextResponse.json({ data: commentsResult.rows[0] }, { status: 201 });
   } catch (e) {
     if (e instanceof ZodError) {
       return NextResponse.json({ error: "Validation error" }, { status: 400 });

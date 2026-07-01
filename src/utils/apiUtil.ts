@@ -79,7 +79,7 @@ export const loginUser = async (loginForm: string) => {
 };
 
 export const logoutUser = async () => {
-  await fetchRESTData("/api/signout", "GET");
+  await fetchRESTData("/api/signout", "POST");
 };
 
 export const loadLikes = async (id: number) => {
