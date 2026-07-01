@@ -1,8 +1,10 @@
 import pool from "@/db/db";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(_, context: { params: Promise<{ id: string }> }) {
+export async function GET(
+  _: NextRequest,
+  context: { params: Promise<{ id: string }> }
+) {
   const { id: postId } = await context.params;
 
   try {

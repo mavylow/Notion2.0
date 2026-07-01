@@ -17,7 +17,7 @@ export async function GET(
 
     const activeDesk = deskResult.rows[0];
     const isPublic = activeDesk.public === true;
-    const isAuthor = activeDesk.authorId === userId;
+    const isAuthor = activeDesk.authorId === Number(userId);
 
     if (isAuthor) {
       const notesQuery = `
@@ -97,7 +97,7 @@ export async function GET(
       });
     }
 
-    if (!isPublic && !isAuthor) {
+    if (!isPublic || !isAuthor) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 

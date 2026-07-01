@@ -1,7 +1,6 @@
-import { IDesk } from "@/interfaces";
+import { TDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
 import { ParamValue } from "next/dist/server/request/params";
-import { StorageUtil } from "./storageUtil";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -162,7 +161,7 @@ export const getDesks = async () => {
   const desks = await fetchRESTData(`/api/desks`, "GET");
   return desks.data;
 };
-export const createDesk = async (newDesk: IDesk) => {
+export const createDesk = async (newDesk: TDesk) => {
   const desk = await fetchRESTData(
     `/api/desks`,
     "POST",

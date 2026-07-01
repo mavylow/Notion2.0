@@ -2,31 +2,14 @@ import pool from "@/db/db";
 import { startSession } from "@/utils/session";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import z, { ZodError } from "zod";
-import { t } from "i18next";
+import { withValidation } from "@/utils/decorators";
+import { AuthSchema } from "@/schema";
+import { TAuth } from "@/interfaces";
 
-const SingInSchema = z.object({
-  email: z.email("Write correct email"),
-  password: z
-    .string()
-    .min(8, t("shortPassword"))
-    .max(14, t("longPassword"))
-    .regex(/[0-9]/, t("passwordContainNumber")),
-});
-
-export async function POST(request: NextRequest) {
-  try {
-    const reqBody = await request.json();
-    const { email, password } = reqBody;
-
-    SingInSchema.parse({ email, password });
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+export const POST = withValidation(
+  AuthSchema,
+  async (_: NextRequest, validatedData: TAuth) => {
+    const { email, password } = validatedData;
 
     const checkUserQuery = `SELECT * FROM users WHERE email = $1`;
     const existingUser = await pool.query(checkUserQuery, [email]);
@@ -81,13 +64,5 @@ export async function POST(request: NextRequest) {
     });
 
     return res;
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
   }
-}
+);

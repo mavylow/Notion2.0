@@ -1,12 +1,10 @@
 import pool from "@/db/db";
+import { TDesk } from "@/interfaces";
+import { DeskSchema } from "@/schema";
+import { withValidation } from "@/utils/decorators";
 import { NextRequest, NextResponse } from "next/server";
-import z, { ZodError } from "zod";
-import { v4 as uuidv4 } from "uuid";
 
-const DeskSchema = z.object({
-  name: z.string().nonempty().max(20),
-  link: z.string().optional(),
-});
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,10 +42,6 @@ export async function GET(request: NextRequest) {
       data: resultOwnDesks.rows.concat(resultOtherDesks.rows),
     });
   } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -55,14 +49,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const desk = await request.json();
-  const { name, public: isPublic } = desk;
+export const POST = withValidation(
+  DeskSchema,
+  async (request: NextRequest, validatedData: TDesk) => {
+    const { name, public: isPublic } = validatedData;
 
-  try {
     const authorId = request.headers.get("user-id");
-
-    DeskSchema.parse(desk);
 
     const link = uuidv4();
 
@@ -92,16 +84,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ data: result.rows[0] });
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
   }
-}
+);
 
 export async function DELETE(request: NextRequest) {
   try {
@@ -160,10 +144,6 @@ export async function DELETE(request: NextRequest) {
     });
   } catch (e) {
     console.error("Delete desk error:", e);
-
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
 
     return NextResponse.json(
       { error: "Internal server error" },

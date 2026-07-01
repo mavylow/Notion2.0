@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db";
+import { withValidation } from "@/utils/decorators";
+import { ProfileUpdateSchema } from "@/schema";
+import { TProfileUpdate } from "@/interfaces";
 
-interface IProfileUpdateData {
-  username?: string;
-  email?: string;
-  description?: string;
-  image?: string;
-}
-
-export async function PUT(request: NextRequest) {
-  try {
+export const PUT = withValidation(
+  ProfileUpdateSchema,
+  async (request: NextRequest, validatedData: TProfileUpdate) => {
     const userId = request.headers.get("user-id");
-    const body = await request.json();
-    const { username, email, description, image }: IProfileUpdateData = body;
+    const { username, email, description, image } = validatedData;
 
     if (!username && !email && !description && !image) {
       return NextResponse.json(
@@ -115,12 +111,5 @@ export async function PUT(request: NextRequest) {
     const updatedUser = updateResult.rows[0];
 
     return NextResponse.json({ data: updatedUser }, { status: 200 });
-  } catch (error: any) {
-    console.error("Error in profile update:", error);
-
-    return NextResponse.json(
-      { error: "Something went wrong", details: error.message },
-      { status: 500 }
-    );
   }
-}
+);

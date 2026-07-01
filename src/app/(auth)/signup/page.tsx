@@ -7,7 +7,6 @@ import EyeOpenIcon from "@/assets/EyeOpenIcon";
 import EyeCrossedIcon from "@/assets/EyeCrossedIcon";
 import Button from "@components/Button";
 import Input from "@components/Input";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import ErrorWarningIcon from "@/assets/ErrorWarningIcon";
 import ThumbUpIcon from "@/assets/ThumbUpIcon";
@@ -21,31 +20,22 @@ import InputMessage from "@components/InputMessage";
 import { useTranslation } from "react-i18next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { AuthSchema } from "@/schema";
+import { TAuth } from "@/interfaces";
 
 function SignUp() {
   const { t } = useTranslation();
-
-  const FormSchema = z.object({
-    email: z.email(t("emailNotValid")),
-    password: z
-      .string()
-      .min(8, t("shortPassword"))
-      .max(14, t("longPassword"))
-      .regex(/[0-9]/, t("passwordContainNumber")),
-  });
-
-  type FormData = z.infer<typeof FormSchema>;
 
   const {
     register,
     handleSubmit,
     formState: { errors, touchedFields, submitCount },
-  } = useForm<FormData>({
+  } = useForm<TAuth>({
     defaultValues: {
       email: "helena.hills@social.com",
       password: "",
     },
-    resolver: zodResolver(FormSchema),
+    resolver: zodResolver(AuthSchema),
     mode: "onChange",
     reValidateMode: "onChange",
   });

@@ -13,7 +13,7 @@ import React, {
 } from "react";
 import { socketActions } from "@utils/config";
 import "@app/desk/style.css";
-import { ITag, Note } from "@/interfaces";
+import { ITag, INote } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchNote, resetNote, setFullNote } from "@/slices/noteSlice";
@@ -267,7 +267,7 @@ function Desk() {
 
   useEffect(() => {
     if (!isNotesLoading) {
-      const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
+      const allTags = notes?.map((tag: INote) => ({ ...tag, isActive: false }));
       setTags(allTags || []);
     }
   }, [isNotesLoading, notes]);
