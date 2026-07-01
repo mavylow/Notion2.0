@@ -8,7 +8,6 @@ export async function GET(request: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
-
     const userQuery = `
         SELECT id, username, email, description, "profileImage", "firstName", "secondName"
         FROM users 

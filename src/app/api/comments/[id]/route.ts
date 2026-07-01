@@ -1,7 +1,7 @@
 import pool from "@/db/db";
 import { NextResponse } from "next/server";
 
-export async function DELETE(_, { params }) {
+export async function DELETE(request, { params }) {
   const { id } = await params;
 
   try {

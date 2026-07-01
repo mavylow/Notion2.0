@@ -1,7 +1,10 @@
 import pool from "@/db/db";
 import { NextRequest, NextResponse } from "next/server";
 import z, { ZodError } from "zod";
+import { NextRequest, NextResponse } from "next/server";
+import z, { ZodError } from "zod";
 
+export async function POST(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const comment = await request.json();
 
@@ -39,6 +42,7 @@ export async function POST(request: NextRequest) {
 
     const commentsResult = await pool.query(queryComment, [
       postId,
+      userId,
       userId,
       text,
       new Date(),

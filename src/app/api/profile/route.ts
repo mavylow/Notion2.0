@@ -1,10 +1,5 @@
-// app/api/profile/route.ts
-import { cookies } from "next/headers";
-import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db";
-
-const SECRET_KEY = process.env.SECRET_KEY;
 
 interface IProfileUpdateData {
   username?: string;
@@ -13,7 +8,7 @@ interface IProfileUpdateData {
   image?: string;
 }
 
-export async function PUT(request: Request) {
+export async function PUT(request: NextRequest) {
   try {
     const userId = request.headers.get("user-id");
     const body = await request.json();

@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         { status: 412 }
       );
     }
-
+    console.log(e);
     return NextResponse.json(
       { error: "Failed to create post" },
       { status: 500 }
