@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db.js";
-import jwt from "jsonwebtoken";
-import { cookies } from "next/headers";
-
-const SECRET_KEY = process.env.SECRET_KEY;
 
 export async function GET(
   request: NextRequest,

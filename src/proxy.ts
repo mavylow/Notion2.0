@@ -6,7 +6,8 @@ const SECRET_KEY = process.env.SECRET_KEY;
 
 const PUBLIC_API_ROUTES: RouteMatch[] = [
   { route: /^\/api\/signup$/, method: "POST" },
-  { route: /^\/api\/login$/, method: "POST" },
+  { route: /^\/api\/signin$/, method: "POST" },
+  { route: /^\/api\/signout$/, method: "POST" },
   { route: /^\/api\/posts$/, method: "GET" },
   { route: /^\/api\/posts\/\d+\/likes$/, method: "GET" },
   { route: /^\/api\/profile\/\d+$/, method: "GET" },

@@ -1,9 +1,8 @@
-FROM node:20-alpine AS builder
+FROM node:26.4-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
-COPY sidekick-monorepo-internship-backend-0.0.1.tgz ./
 
 RUN npm ci
 
@@ -17,7 +16,7 @@ RUN npm run build
 
 # =========================
 
-FROM node:20-alpine AS runner
+FROM node:26.4-alpine AS runner
 
 WORKDIR /app
 
