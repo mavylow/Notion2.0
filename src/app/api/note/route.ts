@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db.js";
 import { withValidation } from "@/utils/decorators";
 import { NoteSchema } from "@/schema";
-import { INote } from "@/interfaces";
+import { INote, TNoteAdd } from "@/interfaces";
 
 export const POST = withValidation(
   NoteSchema,
-  async (_: NextRequest, validatedData: INote) => {
+  async (_: NextRequest, validatedData: TNoteAdd) => {
     const {
       userId,
       title,

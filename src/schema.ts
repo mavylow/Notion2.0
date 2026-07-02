@@ -23,7 +23,7 @@ export const DeskSchema = z.object({
 
 export const NoteSchema = z.object({
   userId: z.number(),
-  id: z.number(),
+  id: z.number().optional(),
   title: z.string(),
   body: z.string(),
   desk: z.boolean(),
@@ -32,7 +32,6 @@ export const NoteSchema = z.object({
   height: z.number().optional(),
   width: z.number().optional(),
   deskId: z.number(),
-  createdAt: z.string(),
 });
 
 export const PostSchema = z.object({

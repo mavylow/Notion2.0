@@ -211,7 +211,8 @@ function Desk() {
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
       const newTag = {
         userId: user.id,
-        note: { title: "Пустая заметка", body: "Тело заметки..." },
+        title: "Пустая заметка",
+        body: "Тело заметки...",
         desk: true,
         x: pageX,
         y: pageY,
@@ -672,6 +673,7 @@ function Desk() {
             id="desk"
             onDoubleClick={(e) => {
               if (!(e.target as HTMLElement).closest(".tag")) {
+                console.log("dcl");
                 const pos = screenToCanvas(e.clientX, e.clientY);
                 handleAddTag.mutate({
                   pageX: Math.floor(pos.x),

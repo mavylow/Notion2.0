@@ -103,7 +103,7 @@ export type IModal = {
 
 export type modalStatus = "success" | "error" | "warning" | null;
 
-export type INote = z.infer<typeof NoteSchema>;
+export type TNoteAdd = z.infer<typeof NoteSchema>;
 
 export type HttpMethod =
   | "GET"
@@ -130,3 +130,5 @@ export type TDesk = z.infer<typeof DeskSchema>;
 export type TPostForm = z.infer<typeof PostSchema>;
 
 export type TProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
+
+export type INote = z.infer<typeof NoteSchema>;

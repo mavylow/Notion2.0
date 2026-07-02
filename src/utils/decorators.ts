@@ -14,6 +14,7 @@ export function withValidation<T>(schema: ZodSchema<T>, handler: IHandler<T>) {
         return;
       }
       const reqBody = await request.json();
+      console.log(reqBody);
       const validatedData = schema.parse(reqBody);
 
       return await handler(request, validatedData, cxt);
