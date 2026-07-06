@@ -1,6 +1,8 @@
 import pool from "@/db/db";
+import { TPostForm } from "@/interfaces";
+import { PostSchema } from "@/schema";
+import { withValidation } from "@/utils/decorators";
 import { NextRequest, NextResponse } from "next/server";
-import z, { ZodError } from "zod";
 
 export async function GET() {
   try {
@@ -17,7 +19,7 @@ export async function GET() {
     }
     const posts = result.rows;
 
-    return NextResponse.json({ success: true, data: posts }, { status: 200 });
+    return NextResponse.json({ data: posts }, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { error: "Error with the server" },
@@ -26,18 +28,12 @@ export async function GET() {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const post = await request.json();
+export const POST = withValidation(
+  PostSchema,
+  async (request: NextRequest, validatedData: TPostForm) => {
+    const userId = request.headers.get("user-id");
 
-  const PostSchema = z.object({
-    title: z.string().max(20).nonempty(),
-    content: z.string().max(200).nullable(),
-    image: z.string().nullable(),
-  });
-
-  try {
-    const validatedPost = PostSchema.parse(post);
-    const { title, content, image } = validatedPost;
+    const { title, content, image } = validatedData;
 
     const query = `
     INSERT INTO posts ("authorId", title, content, image, "creationDate")
@@ -45,8 +41,6 @@ export async function POST(request: NextRequest) {
     RETURNING *
 
     `;
-
-    const userId = request.headers.get("user-id");
 
     const result = await pool.query(query, [
       userId,
@@ -56,21 +50,6 @@ export async function POST(request: NextRequest) {
       new Date(),
     ]);
 
-    return NextResponse.json(
-      { success: true, data: result.rows[0] },
-      { status: 201 }
-    );
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Incorrect data for post" },
-        { status: 412 }
-      );
-    }
-    console.log(e);
-    return NextResponse.json(
-      { error: "Failed to create post" },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: result.rows[0] }, { status: 201 });
   }
-}
+);

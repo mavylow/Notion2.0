@@ -1,14 +1,16 @@
 import pool from "@/db/db";
+import { AuthSchema } from "@/schema";
+import { withValidation } from "@/utils/decorators";
 import { startSession } from "@/utils/session";
 import { NextRequest, NextResponse } from "next/server";
 
 const bcrypt = require("bcrypt");
 
-export async function POST(request: NextRequest) {
-  const reqBody = await request.json();
-  const { email, password } = reqBody;
+export const POST = withValidation(
+  AuthSchema,
+  async (_: NextRequest, validatedData) => {
+    const { email, password } = validatedData;
 
-  try {
     const query = `
     SELECT * 
     FROM users 
@@ -37,7 +39,6 @@ export async function POST(request: NextRequest) {
     const token = await startSession(responseUser.id);
 
     const res = NextResponse.json({
-      success: true,
       data: { token, user: responseUser },
     });
 
@@ -52,11 +53,5 @@ export async function POST(request: NextRequest) {
     });
 
     return res;
-  } catch (e) {
-    console.error("Login error:", e);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
   }
-}
+);

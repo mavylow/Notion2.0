@@ -2,19 +2,14 @@ import pool from "@/db/db";
 import { startSession } from "@/utils/session";
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
-import { redirect } from "next/navigation";
+import { withValidation } from "@/utils/decorators";
+import { AuthSchema } from "@/schema";
+import { TAuth } from "@/interfaces";
 
-export async function POST(request: NextRequest) {
-  try {
-    const reqBody = await request.json();
-    const { email, password } = reqBody;
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+export const POST = withValidation(
+  AuthSchema,
+  async (_: NextRequest, validatedData: TAuth) => {
+    const { email, password } = validatedData;
 
     const checkUserQuery = `SELECT * FROM users WHERE email = $1`;
     const existingUser = await pool.query(checkUserQuery, [email]);
@@ -53,10 +48,10 @@ export async function POST(request: NextRequest) {
       createdAt: newUser.creationDate,
     };
 
-    const res = NextResponse.json({
-      success: true,
-      data: { token, user: responseUser },
-    });
+    const res = NextResponse.json(
+      { data: { token, user: responseUser } },
+      { status: 201 }
+    );
 
     res.cookies.set({
       name: "session",
@@ -69,10 +64,5 @@ export async function POST(request: NextRequest) {
     });
 
     return res;
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
   }
-}
+);

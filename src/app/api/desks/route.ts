@@ -1,14 +1,10 @@
 import pool from "@/db/db";
-import { cookies } from "next/headers";
+import { IDesk, TDesk } from "@/interfaces";
+import { DeskSchema } from "@/schema";
+import { withValidation } from "@/utils/decorators";
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
-import z, { ZodError } from "zod";
-import { v4 as uuidv4 } from "uuid";
 
-const DeskSchema = z.object({
-  name: z.string().nonempty().max(20),
-  link: z.string().optional(),
-});
+import { v4 as uuidv4 } from "uuid";
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,13 +17,14 @@ export async function GET(request: NextRequest) {
           `;
 
     const resultOwnDesks = await pool.query(queryOwnDesk, [authorId]);
+    console.log(resultOwnDesks.rows);
 
     const queryOtherDesks = `
           SELECT desks.id, link, "authorId", name, "creationDate" 
           FROM permissions
           LEFT JOIN desks on desks."id" = permissions."deskId"
           WHERE "userId" = $1
-    `;
+          `;
 
     const resultOtherDesks = await pool.query(queryOtherDesks, [authorId]);
 
@@ -43,14 +40,13 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      data: resultOwnDesks.rows.concat(resultOtherDesks.rows),
+      data: resultOwnDesks.rows.concat(
+        resultOtherDesks.rows.filter(
+          (desk: IDesk) => desk.authorId !== Number(authorId)
+        )
+      ),
     });
   } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -58,14 +54,12 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  const desk = await request.json();
-  const { name, public: isPublic } = desk;
+export const POST = withValidation(
+  DeskSchema,
+  async (request: NextRequest, validatedData: TDesk) => {
+    const { name, public: isPublic } = validatedData;
 
-  try {
     const authorId = request.headers.get("user-id");
-
-    DeskSchema.parse(desk);
 
     const link = uuidv4();
 
@@ -94,28 +88,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ success: true, data: result.rows[0] });
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: result.rows[0] });
   }
-}
+);
 
-export async function DELETE(request) {
+export async function DELETE(request: NextRequest) {
   try {
     const deskId = await request.json();
-
-    if (!deskId) {
-      return NextResponse.json(
-        { error: "Desk ID is required" },
-        { status: 400 }
-      );
-    }
 
     const authorId = request.headers.get("user-id");
 
@@ -138,23 +117,23 @@ export async function DELETE(request) {
     }
 
     const deleteNotesQuery = `
-    DELETE FROM notes 
-    WHERE "deskId" = $1
-    RETURNING id, title
-  `;
+          DELETE FROM notes 
+          WHERE "deskId" = $1
+          RETURNING id, title
+        `;
     const deletedNotes = await pool.query(deleteNotesQuery, [deskId]);
 
     const deletePermissionsQuery = `
-      DELETE FROM permissions 
-      WHERE "deskId" = $1
-    `;
+          DELETE FROM permissions 
+          WHERE "deskId" = $1
+        `;
     await pool.query(deletePermissionsQuery, [deskId]);
 
     const deleteDeskQuery = `
-      DELETE FROM desks 
-      WHERE id = $1 AND "authorId" = $2
-      RETURNING id, name
-    `;
+          DELETE FROM desks 
+          WHERE id = $1 AND "authorId" = $2
+          RETURNING id, name
+        `;
 
     const result = await pool.query(deleteDeskQuery, [deskId, authorId]);
 
@@ -166,19 +145,10 @@ export async function DELETE(request) {
     }
 
     return NextResponse.json({
-      success: true,
-      message: "Desk deleted successfully",
-      data: {
-        id: result.rows[0].id,
-        name: result.rows[0].name,
-      },
+      status: 204,
     });
   } catch (e) {
     console.error("Delete desk error:", e);
-
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
 
     return NextResponse.json(
       { error: "Internal server error" },

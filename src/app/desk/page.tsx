@@ -4,7 +4,7 @@ import { AuthContext, IAuthContext } from "@/providers/AuthProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useContext, useEffect, useRef, useState } from "react";
 import "@app/desk/style.css";
-import { IDesk } from "@/interfaces";
+import { TDesk } from "@/interfaces";
 import { createDesk, deleteDeskById, getDesks } from "@/utils/apiUtil";
 import Button from "@/components/Button";
 import HamburgerMenuIcon from "@/assets/HamburgerMenuIcon";
@@ -32,7 +32,7 @@ function DeskList() {
   });
 
   const addDesk = useMutation({
-    mutationFn: async (desk: IDesk) => {
+    mutationFn: async (desk: TDesk) => {
       await createDesk(desk);
     },
     onSuccess: () => {
@@ -53,7 +53,7 @@ function DeskList() {
     setIsExpanded((prev) => !prev);
   };
 
-  const handleAddDesk = (desk: IDesk) => {
+  const handleAddDesk = (desk: TDesk) => {
     addDesk.mutate(desk);
   };
 

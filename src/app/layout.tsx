@@ -6,7 +6,7 @@ import ClientsInit from "@components/ClientsInit";
 import ContextProvider from "@providers/ContextProvider";
 import { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+//export const dynamic = "force-dynamic";
 
 const Global = createGlobalStyle`
 * {

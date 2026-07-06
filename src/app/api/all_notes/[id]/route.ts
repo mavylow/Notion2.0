@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/db/db.js";
 
-import { cookies } from "next/headers";
-
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
+  const userId = request.headers.get("user-id");
   try {
-    const userId = request.headers.get("user-id");
-
     const deskQuery = `SELECT * FROM desks WHERE link = $1`;
     const deskResult = await pool.query(deskQuery, [id]);
 
@@ -20,7 +17,7 @@ export async function GET(
 
     const activeDesk = deskResult.rows[0];
     const isPublic = activeDesk.public === true;
-    const isAuthor = activeDesk.authorId === userId;
+    const isAuthor = activeDesk.authorId === Number(userId);
 
     if (isAuthor) {
       const notesQuery = `
@@ -44,7 +41,6 @@ export async function GET(
       const result = await pool.query(notesQuery, [activeDesk.id]);
 
       return NextResponse.json({
-        success: true,
         data: { notes: result.rows, deskId: activeDesk.id },
         count: result.rows.length,
       });
@@ -96,19 +92,17 @@ export async function GET(
       const result = await pool.query(notesQuery, [activeDesk.id]);
 
       return NextResponse.json({
-        success: true,
         data: { notes: result.rows, deskId: activeDesk.id },
         count: result.rows.length,
       });
     }
 
-    if (!isPublic && !isAuthor) {
+    if (!isPublic || !isAuthor) {
       return NextResponse.json({ error: "Permission denied" }, { status: 403 });
     }
 
     return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   } catch (err: any) {
-    console.error("Error fetching notes:", err);
     return NextResponse.json(
       {
         error: "Failed to fetch notes",

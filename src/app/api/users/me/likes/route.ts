@@ -4,11 +4,6 @@ import pool from "@/db/db";
 export async function GET(request: NextRequest) {
   try {
     const authorId = request.headers.get("user-id");
-
-    if (!authorId) {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
     const query = `
     SELECT * 
     FROM likes
@@ -21,10 +16,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(
-      { success: true, data: result.rows },
-      { status: 200 }
-    );
+    return NextResponse.json({ data: result.rows }, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { error: "Invalid server error" },

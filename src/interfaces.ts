@@ -1,3 +1,13 @@
+import z from "zod";
+import {
+  AuthSchema,
+  CommentSchema,
+  DeskSchema,
+  NoteSchema,
+  PostSchema,
+  ProfileUpdateSchema,
+} from "@/schema";
+
 export interface IPost {
   id: number;
   authorId: number;
@@ -23,18 +33,6 @@ export interface IUser {
   secondName?: string;
   likesCount?: number;
   lastLogin?: string;
-  creationDate?: string;
-  modifiedDate?: string;
-}
-
-export interface Note {
-  id: number;
-  userId: string;
-  title: string;
-  body: string;
-  desk: boolean;
-  x: number;
-  y: number;
   creationDate?: string;
   modifiedDate?: string;
 }
@@ -71,11 +69,6 @@ export interface ISidebarUser {
   profileImage: string;
 }
 
-export interface IForm {
-  email: string;
-  password: string;
-}
-
 export interface IProfileForm {
   image?: string;
   username: string;
@@ -86,6 +79,14 @@ export interface ILike {
   id: number;
   postId: number;
   userId: number;
+  creationDate: string;
+}
+
+export interface IDesk {
+  id: number;
+  link: string;
+  authorId: number;
+  name: string;
   creationDate: string;
 }
 
@@ -110,23 +111,32 @@ export type IModal = {
 
 export type modalStatus = "success" | "error" | "warning" | null;
 
-export interface INote {
-  userId: number;
-  id: number;
-  title: string;
-  body: string;
-  desk: boolean;
-  x: number;
-  height?: number;
-  width?: number;
-  y: number;
-  deskId: number;
-  createdAt: string;
-}
+export type TNoteAdd = z.infer<typeof NoteSchema>;
+
+export type HttpMethod =
+  | "GET"
+  | "HEAD"
+  | "OPTIONS"
+  | "POST"
+  | "PUT"
+  | "DELETE"
+  | "PATCH";
+
+export type RouteMatch = {
+  route: RegExp;
+  method: HttpMethod;
+};
 
 export type ITag = INote & { isActive: boolean };
 
-export interface IDesk {
-  name: string;
-  public: boolean;
-}
+export type TComment = z.infer<typeof CommentSchema>;
+
+export type TAuth = z.infer<typeof AuthSchema>;
+
+export type TDesk = z.infer<typeof DeskSchema>;
+
+export type TPostForm = z.infer<typeof PostSchema>;
+
+export type TProfileUpdate = z.infer<typeof ProfileUpdateSchema>;
+
+export type INote = z.infer<typeof NoteSchema>;

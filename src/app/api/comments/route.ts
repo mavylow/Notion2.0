@@ -1,18 +1,13 @@
 import pool from "@/db/db";
+import { TComment } from "@/interfaces";
+import { CommentSchema } from "@/schema";
+import { withValidation } from "@/utils/decorators";
 import { NextRequest, NextResponse } from "next/server";
-import z, { ZodError } from "zod";
 
-export async function POST(request: NextRequest) {
-  const comment = await request.json();
-
-  const CommentsSchema = z.object({
-    postId: z.number(),
-    text: z.string().max(30),
-  });
-
-  try {
-    CommentsSchema.parse(comment);
-    const { postId, text } = comment;
+export const POST = withValidation(
+  CommentSchema,
+  async (request: NextRequest, validatedData: TComment) => {
+    const { postId, text } = validatedData;
 
     const queryPost = `
         SELECT * 
@@ -30,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = request.headers.get("user-id");
-    console.log(userId);
+
     const queryComment = `
         INSERT INTO comments ("postId", "authorId", text, "creationDate")
         VALUES ($1, $2, $3, $4)
@@ -55,15 +50,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Data is clean" }, { status: 204 });
     }
 
-    return NextResponse.json({ success: true, data: commentsResult.rows[0] });
-  } catch (e) {
-    if (e instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error" }, { status: 400 });
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ data: commentsResult.rows[0] }, { status: 201 });
   }
-}
+);

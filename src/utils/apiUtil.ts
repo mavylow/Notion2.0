@@ -1,7 +1,6 @@
-import { IDesk } from "@/interfaces";
+import { TDesk } from "@/interfaces";
 import axios, { type AxiosRequestConfig } from "axios";
 import { ParamValue } from "next/dist/server/request/params";
-import { StorageUtil } from "./storageUtil";
 
 export type apiMethod = "GET" | "POST" | "PUT" | "DELETE";
 
@@ -22,8 +21,6 @@ export async function fetchRESTData(
   const apiPath = api.startsWith("/") ? api : `/${api}`;
   const fullUrl = `${getApiUrl()}${apiPath}`;
 
-  const token = StorageUtil.get("token");
-
   const config: AxiosRequestConfig = {
     method: method.toLowerCase(),
     url: fullUrl,
@@ -31,10 +28,6 @@ export async function fetchRESTData(
       "Content-Type": "application/json;charset=utf-8",
     },
   };
-
-  if (token) {
-    config.headers!.Authorization = `Bearer ${token}`;
-  }
 
   if (body && method !== "GET") {
     config.data = body;
@@ -65,31 +58,6 @@ export async function fetchRESTData(
   }
 }
 
-export async function fetchGraphQLData(body?: string) {
-  try {
-    const token = StorageUtil.get("token");
-
-    const response = await fetch("/api/graphql", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: body,
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    if (response.status === 204) {
-      return null;
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error(error);
-  }
-}
-
 export const loadPosts = async () => {
   const posts = await fetchRESTData(`/api/posts`, "GET");
   return posts.data;
@@ -100,17 +68,17 @@ export const addPostsAxios = async (newPost: string) => {
 };
 
 export const loadUser = async (userId: number) => {
-  const user = await fetchRESTData(`/api/profile/${userId}`, "GET");
+  const user = await fetchRESTData(`/api/users/${userId}`, "GET");
   return user.data;
 };
 
 export const loginUser = async (loginForm: string) => {
-  const user = await fetchRESTData("/api/login", "POST", loginForm);
+  const user = await fetchRESTData("/api/signin", "POST", loginForm);
   return user.data;
 };
 
 export const logoutUser = async () => {
-  await fetchRESTData("/api/logout", "GET");
+  await fetchRESTData("/api/signout", "POST");
 };
 
 export const loadLikes = async (id: number) => {
@@ -119,7 +87,7 @@ export const loadLikes = async (id: number) => {
 };
 
 export const restoreUser = async () => {
-  const user = await fetchRESTData("/api/me", "GET");
+  const user = await fetchRESTData("/api/users/me", "GET");
   return user.data;
 };
 
@@ -129,7 +97,7 @@ export const signUpUser = async (singUpForm: string) => {
 };
 
 export const updateUserAxios = async (updatedUser: string) => {
-  const user = await fetchRESTData("/api/profile", "PUT", updatedUser);
+  const user = await fetchRESTData("/api/users", "PUT", updatedUser);
   return user.data;
 };
 
@@ -147,35 +115,25 @@ export const addComment = async (commentData: string) => {
 };
 
 export const likePost = async (postId: number) => {
-  await fetchRESTData("/api/like", "POST", JSON.stringify({ postId }));
+  await fetchRESTData(`/api/posts/${postId}/likes`, "POST");
 };
 
 export const dislikePost = async (postId: number) => {
-  await fetchRESTData("/api/dislike", "POST", JSON.stringify({ postId }));
-};
-
-export const getSuggested = async () => {
-  const suggested = await fetchRESTData("/api/getSuggested", "GET");
-  return suggested.data;
-};
-
-export const getGroups = async () => {
-  const groups = await fetchRESTData("/api/groups", "GET");
-  return groups.data;
+  await fetchRESTData(`/api/posts/${postId}/likes`, "DELETE");
 };
 
 export const getStatisticLikes = async () => {
-  const likes = await fetchRESTData(`/api/me/likes`, "GET");
+  const likes = await fetchRESTData(`/api/users/me/likes`, "GET");
   return likes.data;
 };
 
 export const getStatisticPosts = async () => {
-  const posts = await fetchRESTData(`/api/me/posts`, "GET");
+  const posts = await fetchRESTData(`/api/users/me/posts`, "GET");
   return posts.data;
 };
 
 export const getStatisticComments = async () => {
-  const comments = await fetchRESTData(`/api/me/comments`, "GET");
+  const comments = await fetchRESTData(`/api/users/me/comments`, "GET");
   return comments.data;
 };
 
@@ -193,7 +151,7 @@ export const getDesks = async () => {
   const desks = await fetchRESTData(`/api/desks`, "GET");
   return desks.data;
 };
-export const createDesk = async (newDesk: IDesk) => {
+export const createDesk = async (newDesk: TDesk) => {
   const desk = await fetchRESTData(
     `/api/desks`,
     "POST",

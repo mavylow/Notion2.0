@@ -1,6 +1,4 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-
 import pool from "@/db/db";
 
 export async function GET(request: NextRequest) {
@@ -9,7 +7,7 @@ export async function GET(request: NextRequest) {
 
     const query = `
     SELECT * 
-    FROM comments
+    FROM posts
     WHERE "authorId"=$1
     `;
 
@@ -19,10 +17,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(
-      { success: true, data: result.rows },
-      { status: 200 }
-    );
+    return NextResponse.json({ data: result.rows }, { status: 200 });
   } catch (e) {
     return NextResponse.json(
       { error: "Invalid server error" },

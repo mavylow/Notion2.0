@@ -13,7 +13,7 @@ import React, {
 } from "react";
 import { socketActions } from "@utils/config";
 import "@app/desk/style.css";
-import { ITag, Note } from "@/interfaces";
+import { ITag, INote } from "@/interfaces";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store";
 import { fetchNote, resetNote, setFullNote } from "@/slices/noteSlice";
@@ -211,7 +211,8 @@ function Desk() {
     mutationFn: async ({ pageX, pageY }: { pageX: number; pageY: number }) => {
       const newTag = {
         userId: user.id,
-        note: { title: "Пустая заметка", body: "Тело заметки..." },
+        title: "Пустая заметка",
+        body: "Тело заметки...",
         desk: true,
         x: pageX,
         y: pageY,
@@ -267,7 +268,7 @@ function Desk() {
 
   useEffect(() => {
     if (!isNotesLoading) {
-      const allTags = notes?.map((tag: Note) => ({ ...tag, isActive: false }));
+      const allTags = notes?.map((tag: INote) => ({ ...tag, isActive: false }));
       setTags(allTags || []);
     }
   }, [isNotesLoading, notes]);
@@ -672,6 +673,7 @@ function Desk() {
             id="desk"
             onDoubleClick={(e) => {
               if (!(e.target as HTMLElement).closest(".tag")) {
+                console.log("dcl");
                 const pos = screenToCanvas(e.clientX, e.clientY);
                 handleAddTag.mutate({
                   pageX: Math.floor(pos.x),

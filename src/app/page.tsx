@@ -1,6 +1,5 @@
 "use client";
 import Post from "@components/Post";
-import Sidebar from "@components/Sidebar";
 import type { IPost } from "@/interfaces";
 import CreatePost from "@components/CreatePost";
 import { useSelector } from "react-redux";
@@ -45,7 +44,6 @@ function Home() {
           />
         ))}
       </main>
-      {user && <Sidebar />}
     </Suspense>
   );
 }

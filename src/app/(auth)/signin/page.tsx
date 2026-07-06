@@ -7,7 +7,7 @@ import EyeOpenIcon from "@/assets/EyeOpenIcon";
 import Button from "@components/Button";
 import Input from "@components/Input";
 import { useFormik } from "formik";
-import type { IForm } from "@/interfaces";
+import type { TAuth } from "@/interfaces";
 import * as Yup from "yup";
 import ErrorWarningIcon from "@/assets/ErrorWarningIcon";
 import ThumbUpIcon from "@/assets/ThumbUpIcon";
@@ -35,7 +35,7 @@ export default function SignIn() {
 
   const dispatch = useDispatch<AppDispatch>();
   const isAuth = useSelector<RootState>((state) => state.auth.isAuth);
-  const form = useFormik<IForm>({
+  const form = useFormik<TAuth>({
     initialValues: { email: "", password: "" },
     validationSchema: FormSchema,
     onSubmit: (data) => dispatch(signIn(data)),
