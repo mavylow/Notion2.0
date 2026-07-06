@@ -130,12 +130,6 @@ a {
   padding: clamp(16px, 3vw, 36px);
 }
 
-@media (min-width: 1450px) and (min-height: 910px) {
-  .home.auth {
-    margin-left: 341px;
-  }
-}
-
 @media (max-width: 375px) {
   .error h1 {
     text-wrap: wrap;

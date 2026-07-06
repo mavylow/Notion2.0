@@ -68,7 +68,7 @@ export const addPostsAxios = async (newPost: string) => {
 };
 
 export const loadUser = async (userId: number) => {
-  const user = await fetchRESTData(`/api/profile/${userId}`, "GET");
+  const user = await fetchRESTData(`/api/users/${userId}`, "GET");
   return user.data;
 };
 
@@ -87,7 +87,7 @@ export const loadLikes = async (id: number) => {
 };
 
 export const restoreUser = async () => {
-  const user = await fetchRESTData("/api/me", "GET");
+  const user = await fetchRESTData("/api/users/me", "GET");
   return user.data;
 };
 
@@ -97,7 +97,7 @@ export const signUpUser = async (singUpForm: string) => {
 };
 
 export const updateUserAxios = async (updatedUser: string) => {
-  const user = await fetchRESTData("/api/profile", "PUT", updatedUser);
+  const user = await fetchRESTData("/api/users", "PUT", updatedUser);
   return user.data;
 };
 
@@ -122,28 +122,18 @@ export const dislikePost = async (postId: number) => {
   await fetchRESTData(`/api/posts/${postId}/likes`, "DELETE");
 };
 
-export const getSuggested = async () => {
-  const suggested = await fetchRESTData("/api/getSuggested", "GET");
-  return suggested.data;
-};
-
-export const getGroups = async () => {
-  const groups = await fetchRESTData("/api/groups", "GET");
-  return groups.data;
-};
-
 export const getStatisticLikes = async () => {
-  const likes = await fetchRESTData(`/api/me/likes`, "GET");
+  const likes = await fetchRESTData(`/api/users/me/likes`, "GET");
   return likes.data;
 };
 
 export const getStatisticPosts = async () => {
-  const posts = await fetchRESTData(`/api/me/posts`, "GET");
+  const posts = await fetchRESTData(`/api/users/me/posts`, "GET");
   return posts.data;
 };
 
 export const getStatisticComments = async () => {
-  const comments = await fetchRESTData(`/api/me/comments`, "GET");
+  const comments = await fetchRESTData(`/api/users/me/comments`, "GET");
   return comments.data;
 };
 
