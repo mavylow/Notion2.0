@@ -82,6 +82,14 @@ export interface ILike {
   creationDate: string;
 }
 
+export interface IDesk {
+  id: number;
+  link: string;
+  authorId: number;
+  name: string;
+  creationDate: string;
+}
+
 export interface YearStats {
   [year: number]: MonthStat[];
 }

@@ -1,5 +1,5 @@
 import pool from "@/db/db";
-import { TDesk } from "@/interfaces";
+import { IDesk, TDesk } from "@/interfaces";
 import { DeskSchema } from "@/schema";
 import { withValidation } from "@/utils/decorators";
 import { NextRequest, NextResponse } from "next/server";
@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
           `;
 
     const resultOwnDesks = await pool.query(queryOwnDesk, [authorId]);
+    console.log(resultOwnDesks.rows);
 
     const queryOtherDesks = `
           SELECT desks.id, link, "authorId", name, "creationDate" 
@@ -39,7 +40,11 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      data: resultOwnDesks.rows.concat(resultOtherDesks.rows),
+      data: resultOwnDesks.rows.concat(
+        resultOtherDesks.rows.filter(
+          (desk: IDesk) => desk.authorId !== Number(authorId)
+        )
+      ),
     });
   } catch (e) {
     return NextResponse.json(
